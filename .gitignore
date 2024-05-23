@@ -9,4 +9,5 @@
 *.qrs
 *.qrs-
 *.qrsc
+*.xws
 .DS_Store
