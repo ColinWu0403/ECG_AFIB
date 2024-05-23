@@ -45,7 +45,7 @@ def evaluate_model(model, X_test, y_test):
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
-    plt.title('Confusion Matrix')
+    plt.title('Confusion Matrix: ' + filename)
     plt.show()
 
     return accuracy, conf_matrix, class_report
@@ -72,9 +72,11 @@ def plot_decision_boundary(X, y, model):
     plt.title('Decision Boundary')
     plt.show()
 
+filename = 'data/04043_features.csv'
+
 def main():
     # Load the data
-    df = load_data('data/08219_features.csv')  # Replace 'your_data.csv' with your actual file name
+    df = load_data(filename)  # Replace 'your_data.csv' with your actual file name
 
     # Create the AFib target column
     df = create_afib_target(df)
@@ -89,7 +91,7 @@ def main():
     evaluate_model(model, X_test, y_test)
 
     # Plot the decision boundary
-    plot_decision_boundary(X_test, y_test, model)
+    # plot_decision_boundary(X_test, y_test, model)
 
 if __name__ == "__main__":
     main()
