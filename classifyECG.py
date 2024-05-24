@@ -86,7 +86,7 @@ def create_classification_report_image(class_report_df):
     plt.close()
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "results/model_evaluation_Random_Forest.pdf"
+    pdf_filename = "reports/model_evaluation_Random_Forest.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
