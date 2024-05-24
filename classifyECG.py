@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -8,6 +9,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 def load_data(file_path):
     # Load the data
@@ -27,7 +30,6 @@ def prepare_data(df):
     smote = SMOTE(random_state=42)
     X_res, y_res = smote.fit_resample(X, y)
 
-    print("Support: " + str(len(X_res)) + " " + str(len(y_res)))
     return train_test_split(X_res, y_res, test_size=0.2, random_state=42)
 
 def train_model(X_train, y_train):
@@ -48,45 +50,74 @@ def evaluate_model(model, X_test, y_test):
     # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     conf_matrix = confusion_matrix(y_test, y_pred)
-    class_report = classification_report(y_test, y_pred)
+    class_report = classification_report(y_test, y_pred, output_dict=True)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
 
-    print("Accuracy:", accuracy)
-    print("ROC AUC Score:", roc_auc)
-    print("Confusion Matrix:\n", conf_matrix)
-    print("Classification Report:\n", class_report)
+    # Convert classification report to DataFrame
+    class_report_df = pd.DataFrame(class_report).transpose()
 
-    # Plot the confusion matrix
+    # Add labels column
+    class_report_df['labels'] = class_report_df.index
+
+    # Rearrange columns so "labels" comes first
+    cols = class_report_df.columns.tolist()
+    cols = [cols[-1]] + cols[:-1]
+    class_report_df = class_report_df[cols]
+
+    # Create classification report table image
+    create_classification_report_image(class_report_df)
+
+    # Create PDF report
+    create_pdf(accuracy, roc_auc, conf_matrix)
+    delete_images()
+
+def create_classification_report_image(class_report_df):
+    plt.figure(figsize=(10, 6))
+    plt.axis('off')  # Hide axis
+    cell_text = class_report_df.map(lambda x: f"{x:.8f}" if isinstance(x, float) else str(x))
+    table = plt.table(cellText=cell_text.values,
+              colLabels=class_report_df.columns,
+              loc='center',
+              cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 2)
+    plt.savefig("classification_report.png", bbox_inches='tight')
+    plt.close()
+
+def create_pdf(accuracy, roc_auc, conf_matrix):
+    pdf_filename = "results/model_evaluation_Random_Forest.pdf"
+    c = canvas.Canvas(pdf_filename, pagesize=letter)
+    width, height = letter
+
+    # Add classification report image
+    c.drawImage("classification_report.png", 55, 330, width=500, preserveAspectRatio=True, mask='auto')
+
+    # Add text labels
+    c.drawString(270, height - 50, f"Accuracy")
+    c.drawString(242, height - 70, f"{accuracy}")
+    c.drawString(255, height - 100, f"ROC AUC Score")
+    c.drawString(242, height - 120, f"{roc_auc}")
+
+    c.drawString(245, height - 150, "Classification Report")
+
+    # Add confusion matrix image
     plt.figure(figsize=(8, 6))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
-    plt.title('Confusion Matrix: ' + filename)
-    plt.show()
+    plt.title('Confusion Matrix')
+    plt.savefig("confusion_matrix.png", bbox_inches='tight')
+    plt.close()
 
-    return accuracy, conf_matrix, class_report, roc_auc
+    c.drawImage("confusion_matrix.png", 65, 0, width=500, preserveAspectRatio=True, mask='auto')
 
-def plot_decision_boundary(X, y, model):
-    def plot(ax):
-        x_min, x_max = X.iloc[:, 0].min() - 1, X.iloc[:, 0].max() + 1
-        y_min, y_max = X.iloc[:, 1].min() - 1, X.iloc[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.01),
-                             np.arange(y_min, y_max, 0.01))
+    c.showPage()
+    c.save()
 
-        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-        Z = Z.reshape(xx.shape)
-
-        ax.contourf(xx, yy, Z, alpha=0.3)
-        scatter = ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, s=30, edgecolor='k', cmap=plt.cm.Paired)
-        legend = ax.legend(*scatter.legend_elements(), title="Classes")
-        ax.add_artist(legend)
-        ax.set_xlabel('SDNN')
-        ax.set_ylabel('RMSSD')
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    plot(ax)
-    plt.title('Decision Boundary')
-    plt.show()
+def delete_images():
+    os.remove("classification_report.png")
+    os.remove("confusion_matrix.png")
 
 filename = 'data/afdb_data.csv'
 
@@ -102,9 +133,6 @@ def main():
 
     # Evaluate the model
     evaluate_model(model, X_test, y_test)
-
-    # Plot the decision boundary
-    # plot_decision_boundxary(X_test, y_test, model)
 
 if __name__ == "__main__":
     main()
