@@ -5,7 +5,7 @@
 ### About
 This project is a classification model in Python that predicts if a patient has Atrial Fibrillation (Afib) based on the given Electrocardiography (ECG) signals of the patient.
 
-The model is written in Python using scikit-learn for classification and uses wfdb and Neurokit2 to analyze ECG signals and measure data to be stored in .csv files
+The model is written in Python using scikit-learn for classification and uses wfdb and Neurokit2 to analyze ECG signals and measure data to export them to a dataset (in the data/ folder as .csv files).
 
 The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database. The afdb folder contains the signals, but the actual files are not pushed as they are too large. You can download them on the official website (link is in the citation below).
 
