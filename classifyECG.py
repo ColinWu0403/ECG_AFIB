@@ -3,40 +3,56 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils.class_weight import compute_class_weight
+from imblearn.over_sampling import SMOTE
 import seaborn as sns
 
 def load_data(file_path):
     # Load the data
     return pd.read_csv(file_path)
 
-def create_afib_target(df, threshold=0):
-    # Create a binary target column based on num_AFIB_annotations
-    df['afib'] = (df['num_AFIB_annotations'] > threshold).astype(int)
-    return df
-
 def prepare_data(df):
+    # Normalize the data
+    features = ['hrv_sdnn', 'hrv_rmssd', 'cv']
+    scaler = StandardScaler()
+    df[features] = scaler.fit_transform(df[features])
+
     # Prepare the data
-    X = df[['hrv_sdnn', 'hrv_rmssd']]  # Features: SDNN and RMSSD
-    y = df['afib']  # Target: whether the patient has AFib
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+    X = df[features]  # Features: SDNN, RMSSD, and cv
+    y = df['has_AFIB']  # Target: whether the patient has AFib
+
+    # Address class imbalance using SMOTE
+    smote = SMOTE(random_state=42)
+    X_res, y_res = smote.fit_resample(X, y)
+
+    print("Support: " + str(len(X_res)) + " " + str(len(y_res)))
+    return train_test_split(X_res, y_res, test_size=0.2, random_state=42)
 
 def train_model(X_train, y_train):
+    # Calculate class weights
+    class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+    class_weight_dict = dict(enumerate(class_weights))
+
     # Train the model using Random Forest
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight=class_weight_dict)
     model.fit(X_train, y_train)
     return model
 
 def evaluate_model(model, X_test, y_test):
     # Make predictions
     y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
 
     # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     conf_matrix = confusion_matrix(y_test, y_pred)
     class_report = classification_report(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_proba)
 
     print("Accuracy:", accuracy)
+    print("ROC AUC Score:", roc_auc)
     print("Confusion Matrix:\n", conf_matrix)
     print("Classification Report:\n", class_report)
 
@@ -48,7 +64,7 @@ def evaluate_model(model, X_test, y_test):
     plt.title('Confusion Matrix: ' + filename)
     plt.show()
 
-    return accuracy, conf_matrix, class_report
+    return accuracy, conf_matrix, class_report, roc_auc
 
 def plot_decision_boundary(X, y, model):
     def plot(ax):
@@ -72,14 +88,11 @@ def plot_decision_boundary(X, y, model):
     plt.title('Decision Boundary')
     plt.show()
 
-filename = 'data/08434_features.csv'
+filename = 'data/afdb_data.csv'
 
 def main():
     # Load the data
-    df = load_data(filename)  # Replace 'your_data.csv' with your actual file name
-
-    # Create the AFib target column
-    df = create_afib_target(df)
+    df = load_data(filename)
 
     # Prepare the data
     X_train, X_test, y_train, y_test = prepare_data(df)
