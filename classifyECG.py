@@ -72,7 +72,7 @@ def plot_decision_boundary(X, y, model):
     plt.title('Decision Boundary')
     plt.show()
 
-filename = 'data/04043_features.csv'
+filename = 'data/08434_features.csv'
 
 def main():
     # Load the data
@@ -91,7 +91,7 @@ def main():
     evaluate_model(model, X_test, y_test)
 
     # Plot the decision boundary
-    # plot_decision_boundary(X_test, y_test, model)
+    # plot_decision_boundxary(X_test, y_test, model)
 
 if __name__ == "__main__":
     main()

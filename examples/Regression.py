@@ -70,7 +70,7 @@ def user_input_prediction(model, scaler):
             print("Please enter a valid number for height.")
 
 def main():
-    df = pd.read_csv('../data/2023_dataframe.csv')
+    df = pd.read_csv('2023_dataframe.csv')
 
     # Define features and target
     X = df[['old', 'sex', 'height', 'diabetes']]

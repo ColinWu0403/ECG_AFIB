@@ -209,21 +209,64 @@ def calculate_poincare(rr_intervals):
     sd2 = np.std(np.add(rr_n1, rr_n) / np.sqrt(2))
     return sd1, sd2
 
+def load_and_combine_data(data_dir):
+    # Initialize an empty list to hold DataFrames
+    data_frames = []
+
+    # Iterate over all files in the data directory
+    for file_name in os.listdir(data_dir):
+        if file_name == "2023_dataframe.csv": # ignore this file
+            continue
+        elif file_name.endswith('.csv'):
+            file_path = os.path.join(data_dir, file_name)
+            # Read the CSV file into a DataFrame
+            df = pd.read_csv(file_path)
+            data_frames.append(df)
+
+    # Combine all DataFrames into one
+    combined_df = pd.concat(data_frames, ignore_index=True)
+    return combined_df
+
+def add_has_afib_column(df):
+    # Create the has_AFIB column based on num_AFIB_annotations
+    df['has_AFIB'] = (df['num_AFIB_annotations'] > 0).astype(int)
+    return df
+
+def save_combined_data(df, output_file):
+    # Save the combined DataFrame to a new CSV file
+    df.to_csv(output_file, index=False)
+
 def main():
-    # Define the directory containing the ECG records
-    data_dir = "afdb"
-    records = [""]  # Add all record names here
+    print("1. process ECG signals and export to .csv files")
+    print("2. combine all data")
+    choice = input("Enter the number of your choice: ")
 
-    for record_name in records:
-        record_path = os.path.join(data_dir, record_name)
-        features = process_ecg_record(record_path, record_name)
+    if choice == "1":
+        # Define the directory containing the ECG records
+        afdb_dir = "afdb"
+        records = [""]  # Add all record names here
 
-        # Convert the list of dictionaries to a DataFrame
-        df = pd.DataFrame(features)
-        file_name = "data/" + record_name + "_features.csv"
+        for record_name in records:
+            record_path = os.path.join(afdb_dir, record_name)
+            features = process_ecg_record(record_path, record_name)
 
-        # Save the DataFrame to a CSV file
-        df.to_csv(file_name, index=False)
+            # Convert the list of dictionaries to a DataFrame
+            df = pd.DataFrame(features)
+            file_name = "data/" + record_name + "_features.csv"
+
+            # Save the DataFrame to a CSV file
+            df.to_csv(file_name, index=False)
+    elif choice == "2":
+        data_dir = "data"
+        output_file = "data/afdb_data.csv"
+
+        combined_df = load_and_combine_data(data_dir)
+
+        combined_df = add_has_afib_column(combined_df)
+
+        save_combined_data(combined_df, output_file)
+    else:
+        return
 
 if __name__ == "__main__":
     main()

@@ -39,7 +39,7 @@ color_map = {
 
 def main():
     # Define the file path and color map
-    filepath = '../data/2023_dataframe.csv'
+    filepath = '2023_dataframe.csv'
 
     # Load the data
     df = pd.read_csv(filepath)
