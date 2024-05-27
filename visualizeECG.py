@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def plot_poincare(csv_file, filename):
     # Read the CSV file
     data = pd.read_csv(csv_file)
@@ -36,6 +37,7 @@ def plot_poincare(csv_file, filename):
     plt.grid(True)
     plt.show()
 
+
 def plot_cv(csv_file_path, filename):
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
@@ -57,6 +59,7 @@ def plot_cv(csv_file_path, filename):
     plt.ylabel('CV')
     plt.grid(True)
     plt.show()
+
 
 def plot_heart_rate_mean_vs_std(csv_file_path, filename):
     # Read the CSV file into a DataFrame
@@ -80,6 +83,7 @@ def plot_heart_rate_mean_vs_std(csv_file_path, filename):
     plt.grid(True)
     plt.show()
 
+
 def plot_heart_rate_mean(csv_file_path, filename):
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
@@ -101,6 +105,7 @@ def plot_heart_rate_mean(csv_file_path, filename):
     plt.ylabel('Heart Rate Mean')
     plt.grid(True)
     plt.show()
+
 
 def plot_heart_rate_std(csv_file_path, filename):
     # Read the CSV file into a DataFrame
@@ -124,6 +129,7 @@ def plot_heart_rate_std(csv_file_path, filename):
     plt.grid(True)
     plt.show()
 
+
 def plot_sdnn(csv_file, filename):
     # Load the data
     data = pd.read_csv(csv_file)
@@ -137,6 +143,7 @@ def plot_sdnn(csv_file, filename):
     plt.legend()
     plt.grid(True)
     plt.show()
+
 
 def plot_rmssd(csv_file, filename):
     # Load the data
@@ -152,6 +159,7 @@ def plot_rmssd(csv_file, filename):
     plt.grid(True)
     plt.show()
 
+
 def get_file_name(path):
     if path.endswith("/"):
         path = path[:-1]
@@ -160,8 +168,9 @@ def get_file_name(path):
         last_part = last_part[:-4]
     return last_part
 
+
 def main():
-    csv_file = 'data/08434_features.csv' # Replace with the path to your CSV file
+    csv_file = 'data/30_sec_intervals/04048_features_30.csv'  # Replace with the path to your CSV file
 
     print("Select the type of plot:")
     print("1. Heart Rate Mean")
@@ -194,6 +203,7 @@ def main():
             plot_rmssd(csv_file, get_file_name(csv_file))
         else:
             print("Invalid choice. Please enter a number between 0 to 7.")
+
 
 if __name__ == "__main__":
     main()
