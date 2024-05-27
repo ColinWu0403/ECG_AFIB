@@ -7,6 +7,7 @@ import os
 total_N_annotations = 0
 total_AFIB_annotations = 0
 
+
 def process_ecg_interval(record_path, record_name, start_sample, end_sample, record, interval_index):
     global total_N_annotations
     global total_AFIB_annotations
@@ -70,22 +71,24 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, rec
     # Prepare a dictionary of extracted features
     features = {
         "record_name": record_name,
-        "start_time": interval_index * 5,  # in minutes
+        "start_time": interval_index / 2,  # in minutes
         "sampling_rate": sampling_rate,
         "heart_rate_mean": heart_rate.mean(),
         "heart_rate_std": heart_rate.std(),
-        "signal_quality": avg_quality, # see explanation below
-        "pr_interval_mean": pr_interval_mean, # all values for intervals are in milliseconds
+        "signal_quality": avg_quality,  # see explanation below
+        "pr_interval_mean": pr_interval_mean,  # all values for intervals are in milliseconds
         "pr_interval_std": pr_interval_std,
         "qrs_duration_mean": qrs_duration_mean,
         "qrs_duration_std": qrs_duration_std,
         "qt_interval_mean": qt_interval_mean,
         "qt_interval_std": qt_interval_std,
-        "hrv_rmssd": hrv_time["HRV_RMSSD"].iloc[0], # Square root of the mean of the squared successive differences between adjacent RR intervals.
+        "hrv_rmssd": hrv_time["HRV_RMSSD"].iloc[0],
+        # Square root of the mean of the squared successive differences between adjacent RR intervals.
         "hrv_mean": hrv_time["HRV_MeanNN"].iloc[0],  # The mean of the RR intervals in milliseconds
-        "hrv_sdnn": hrv_time["HRV_SDNN"].iloc[0], # The standard deviation of the RR intervals in milliseconds
-        "cv": cv, # Coefficient of Variation (CV) the ratio of the standard deviation of the RR intervals to the mean RR interval.
-        "sd1": sd1, # Coordinates for scatter plots where each RR interval is plotted against the previous RR interval.
+        "hrv_sdnn": hrv_time["HRV_SDNN"].iloc[0],  # The standard deviation of the RR intervals in milliseconds
+        "cv": cv,
+        # Coefficient of Variation (CV) the ratio of the standard deviation of the RR intervals to the mean RR interval.
+        "sd1": sd1,  # Coordinates for scatter plots where each RR interval is plotted against the previous RR interval.
         "sd2": sd2,
         # Add additional features to the features dictionary
 
@@ -128,6 +131,7 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, rec
 
     return features
 
+
 def process_ecg_record(record_path, record_name):
     # Read the header of the record to get metadata
     record = wfdb.rdheader(record_path)
@@ -135,14 +139,14 @@ def process_ecg_record(record_path, record_name):
     total_samples = record.sig_len
 
     # Split the signal into 5 min intervals
-    five_min_samples = sampling_rate * 300
+    thirty_sec_intervals = sampling_rate * 30
 
-    num_intervals = total_samples // five_min_samples
+    num_intervals = total_samples // thirty_sec_intervals
     all_features = []
 
     for i in range(num_intervals):
-        start_sample = i * five_min_samples
-        end_sample = start_sample + five_min_samples
+        start_sample = i * thirty_sec_intervals
+        end_sample = start_sample + thirty_sec_intervals
         try:
             features = process_ecg_interval(record_path, record_name, start_sample, end_sample, record, i)
             all_features.append(features)
@@ -150,6 +154,7 @@ def process_ecg_record(record_path, record_name):
             print(f"Error processing interval {i}: {e}")
 
     return all_features
+
 
 def count_annotations(file_path, target_symbols):
     count_dict = {symbol: 0 for symbol in target_symbols}
@@ -163,6 +168,7 @@ def count_annotations(file_path, target_symbols):
 
     return count_dict
 
+
 def calculate_pr_interval(info, sampling_rate):
     p_peaks = info["ECG_P_Peaks"]
     r_peaks = info["ECG_R_Peaks"]
@@ -174,6 +180,7 @@ def calculate_pr_interval(info, sampling_rate):
     pr_interval_mean = np.mean(pr_intervals) if pr_intervals else 0
     pr_interval_std = np.std(pr_intervals) if pr_intervals else 0
     return pr_interval_mean, pr_interval_std
+
 
 def calculate_qrs_duration(info, sampling_rate):
     q_peaks = info["ECG_Q_Peaks"]
@@ -189,6 +196,7 @@ def calculate_qrs_duration(info, sampling_rate):
     qrs_duration_std = np.std(qrs_durations) if qrs_durations else 0
     return qrs_duration_mean, qrs_duration_std
 
+
 def calculate_qt_interval(info, sampling_rate):
     q_peaks = info["ECG_Q_Peaks"]
     t_offsets = info["ECG_T_Offsets"]
@@ -202,6 +210,7 @@ def calculate_qt_interval(info, sampling_rate):
     qt_interval_std = np.std(qt_intervals) if qt_intervals else 0
     return qt_interval_mean, qt_interval_std
 
+
 def calculate_poincare(rr_intervals):
     rr_n = rr_intervals[:-1]
     rr_n1 = rr_intervals[1:]
@@ -209,13 +218,16 @@ def calculate_poincare(rr_intervals):
     sd2 = np.std(np.add(rr_n1, rr_n) / np.sqrt(2))
     return sd1, sd2
 
+
 def load_and_combine_data(data_dir):
     # Initialize an empty list to hold DataFrames
     data_frames = []
 
     # Iterate over all files in the data directory
     for file_name in os.listdir(data_dir):
-        if file_name == "2023_dataframe.csv": # ignore this file
+        if file_name == "2023_dataframe.csv":  # ignore this file
+            continue
+        elif file_name == "afdb_data.csv":
             continue
         elif file_name.endswith('.csv'):
             file_path = os.path.join(data_dir, file_name)
@@ -227,14 +239,17 @@ def load_and_combine_data(data_dir):
     combined_df = pd.concat(data_frames, ignore_index=True)
     return combined_df
 
+
 def add_has_afib_column(df):
     # Create the has_AFIB column based on num_AFIB_annotations
     df['has_AFIB'] = (df['num_AFIB_annotations'] > 0).astype(int)
     return df
 
+
 def save_combined_data(df, output_file):
     # Save the combined DataFrame to a new CSV file
     df.to_csv(output_file, index=False)
+
 
 def main():
     print("1. process ECG signals and export to .csv files")
@@ -244,7 +259,7 @@ def main():
     if choice == "1":
         # Define the directory containing the ECG records
         afdb_dir = "afdb"
-        records = [""]  # Add all record names here
+        records = ["08434", "08455"]  # Add all record names here
 
         for record_name in records:
             record_path = os.path.join(afdb_dir, record_name)
@@ -252,7 +267,7 @@ def main():
 
             # Convert the list of dictionaries to a DataFrame
             df = pd.DataFrame(features)
-            file_name = "data/" + record_name + "_features.csv"
+            file_name = "data/" + record_name + "_features_30.csv"
 
             # Save the DataFrame to a CSV file
             df.to_csv(file_name, index=False)
@@ -267,6 +282,7 @@ def main():
         save_combined_data(combined_df, output_file)
     else:
         return
+
 
 if __name__ == "__main__":
     main()

@@ -12,11 +12,22 @@ import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
+
 def load_data(file_path):
     # Load the data
     return pd.read_csv(file_path)
 
+
 def prepare_data(df):
+    # Filter out rows where SDNN > 500 ms
+    df = df[df['hrv_sdnn'] <= 500]
+
+    # Filter out rows where RMSSD > 500 ms
+    df = df[df['hrv_rmssd'] <= 500]
+
+    # Filter out rows where cv > 0.5 (50 % variability)
+    df = df[df['cv'] <= 0.5]
+
     # Normalize the data
     features = ['hrv_sdnn', 'hrv_rmssd', 'cv']
     scaler = StandardScaler()
@@ -28,24 +39,26 @@ def prepare_data(df):
 
     # Address class imbalance using SMOTE
     smote = SMOTE(random_state=42)
-    X_res, y_res = smote.fit_resample(X, y)
+    x_res, y_res = smote.fit_resample(X, y)
 
-    return train_test_split(X_res, y_res, test_size=0.2, random_state=42)
+    return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
-def train_model(X_train, y_train):
+
+def train_model(x_train, y_train):
     # Calculate class weights
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight_dict = dict(enumerate(class_weights))
 
     # Train the model using Random Forest
     model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight=class_weight_dict)
-    model.fit(X_train, y_train)
+    model.fit(x_train, y_train)
     return model
 
-def evaluate_model(model, X_test, y_test):
+
+def evaluate_model(model, x_test, y_test):
     # Make predictions
-    y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    y_pred = model.predict(x_test)
+    y_pred_proba = model.predict_proba(x_test)[:, 1]
 
     # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
@@ -71,22 +84,24 @@ def evaluate_model(model, X_test, y_test):
     create_pdf(accuracy, roc_auc, conf_matrix)
     delete_images()
 
+
 def create_classification_report_image(class_report_df):
     plt.figure(figsize=(10, 6))
     plt.axis('off')  # Hide axis
     cell_text = class_report_df.map(lambda x: f"{x:.8f}" if isinstance(x, float) else str(x))
     table = plt.table(cellText=cell_text.values,
-              colLabels=class_report_df.columns,
-              loc='center',
-              cellLoc='center')
+                      colLabels=class_report_df.columns,
+                      loc='center',
+                      cellLoc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(10)
     table.scale(1, 2)
     plt.savefig("classification_report.png", bbox_inches='tight')
     plt.close()
 
+
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_Random_Forest.pdf"
+    pdf_filename = "reports/model_evaluation_Random_Forest_30_seconds.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -115,24 +130,28 @@ def create_pdf(accuracy, roc_auc, conf_matrix):
     c.showPage()
     c.save()
 
+
 def delete_images():
     os.remove("classification_report.png")
     os.remove("confusion_matrix.png")
 
+
 filename = 'data/afdb_data.csv'
+
 
 def main():
     # Load the data
     df = load_data(filename)
 
     # Prepare the data
-    X_train, X_test, y_train, y_test = prepare_data(df)
+    x_train, x_test, y_train, y_test = prepare_data(df)
 
     # Train the model
-    model = train_model(X_train, y_train)
+    model = train_model(x_train, y_train)
 
     # Evaluate the model
-    evaluate_model(model, X_test, y_test)
+    evaluate_model(model, x_test, y_test)
+
 
 if __name__ == "__main__":
     main()
