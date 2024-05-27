@@ -29,7 +29,7 @@ def prepare_data(df):
     df = df[df['cv'] <= 0.5]
 
     # Normalize the data
-    features = ['hrv_sdnn', 'hrv_rmssd', 'cv']
+    features = ['hrv_sdnn', 'hrv_rmssd', 'cv', "num_N_annotations", "hrv_mean"]
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 
