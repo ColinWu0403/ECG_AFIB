@@ -13,21 +13,26 @@ from keras.src.callbacks import EarlyStopping
 from keras import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization
 from keras.src.utils import to_categorical
-import optuna
-from optuna.integration import TFKerasPruningCallback
 
 
-# Load and prepare data functions remain unchanged
 def load_data(file_path):
     return pd.read_csv(file_path)
 
 
 def prepare_data(df):
+    # Filter out rows where SDNN > 500 ms
     df = df[df['hrv_sdnn'] <= 500]
+
+    # Filter out rows where RMSSD > 500 ms
     df = df[df['hrv_rmssd'] <= 500]
+
+    # Filter out rows where cv > 0.5 (50 % variability)
     df = df[df['cv'] <= 0.5]
+
+    # Filter out rows where the signal_quality is lower than 0.5
     df = df[df['signal_quality'] >= 0.5]
 
+    # Normalize the data
     features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv']
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
@@ -44,30 +49,34 @@ def prepare_data(df):
     return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
 
-# Define the model-building function with hyperparameters from Optuna
-def build_cnn_model(input_shape, params):
+def build_cnn_model(input_shape):
     model = Sequential()
-    model.add(
-        Conv1D(params['filters1'], kernel_size=params['kernel_size1'], activation='relu', input_shape=input_shape))
-    model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=params['pool_size1']))
-    model.add(Dropout(params['dropout1']))
 
-    model.add(Conv1D(params['filters2'], kernel_size=params['kernel_size2'], activation='relu'))
+    # First Convolutional Block
+    model.add(Conv1D(256, kernel_size=1, activation='relu', input_shape=input_shape))
     model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=params['pool_size2']))
-    model.add(Dropout(params['dropout2']))
+    model.add(MaxPooling1D(pool_size=1))
+    model.add(Dropout(0.11519236749638968))
 
-    model.add(Conv1D(params['filters3'], kernel_size=params['kernel_size3'], activation='relu'))
+    # Second Convolutional Block
+    model.add(Conv1D(173, kernel_size=1, activation='relu'))
     model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=params['pool_size3']))
-    model.add(Dropout(params['dropout3']))
+    model.add(MaxPooling1D(pool_size=1))
+    model.add(Dropout(0.23389094244435107))
+
+    # Third Convolutional Block
+    model.add(Conv1D(71, kernel_size=1, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling1D(pool_size=1))
+    model.add(Dropout(0.2597374119309316))
 
     model.add(Flatten())
-    model.add(Dense(params['dense_units'], activation='relu'))
-    model.add(Dropout(params['dense_dropout']))
+    model.add(Dense(717, activation='relu'))
+    model.add(Dropout(0.22070149417575943))
 
+    # Output Layer
     model.add(Dense(2, activation='softmax'))
+
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
@@ -109,7 +118,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_CNN.pdf"
+    pdf_filename = "../reports/model_evaluation_CNN.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -138,59 +147,16 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-def objective(trial):
-    df = load_data(filename)
-    x_train, x_test, y_train, y_test = prepare_data(df)
-    input_shape = (x_train.shape[1], x_train.shape[2])
-
-    params = {
-        'filters1': trial.suggest_int('filters1', 32, 256),
-        'kernel_size1': trial.suggest_int('kernel_size1', 1, 3),
-        'pool_size1': trial.suggest_int('pool_size1', 1, 2),
-        'dropout1': trial.suggest_uniform('dropout1', 0.1, 0.5),
-        'filters2': trial.suggest_int('filters2', 32, 256),
-        'kernel_size2': trial.suggest_int('kernel_size2', 1, 3),
-        'pool_size2': trial.suggest_int('pool_size2', 1, 2),
-        'dropout2': trial.suggest_uniform('dropout2', 0.1, 0.5),
-        'filters3': trial.suggest_int('filters3', 32, 256),
-        'kernel_size3': trial.suggest_int('kernel_size3', 1, 3),
-        'pool_size3': trial.suggest_int('pool_size3', 1, 2),
-        'dropout3': trial.suggest_uniform('dropout3', 0.1, 0.5),
-        'dense_units': trial.suggest_int('dense_units', 128, 1024),
-        'dense_dropout': trial.suggest_uniform('dense_dropout', 0.1, 0.5)
-    }
-
-    model = build_cnn_model(input_shape, params)
-
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model.fit(x_train, y_train, epochs=50, batch_size=32, validation_split=0.2,
-              callbacks=[TFKerasPruningCallback(trial, 'val_loss'), early_stopping], verbose=0)
-
-    loss, accuracy = model.evaluate(x_test, y_test, verbose=0)
-    return accuracy
-
-
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():
-    study = optuna.create_study(direction='maximize')
-    study.optimize(objective, n_trials=50)
-
-    print(f"Best trial:")
-    trial = study.best_trial
-
-    print(f"  Value: {trial.value}")
-    print(f"  Params: ")
-    for key, value in trial.params.items():
-        print(f"    {key}: {value}")
-
-    # Train and evaluate the best model
     df = load_data(filename)
     x_train, x_test, y_train, y_test = prepare_data(df)
-    input_shape = (x_train.shape[1], x_train.shape[2])
 
-    model = build_cnn_model(input_shape, trial.params)
+    input_shape = (x_train.shape[1], x_train.shape[2])
+    model = build_cnn_model(input_shape)
+
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model.fit(x_train, y_train, epochs=100, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
 

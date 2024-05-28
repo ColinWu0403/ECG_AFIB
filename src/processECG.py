@@ -258,7 +258,7 @@ def main():
 
     if choice == "1":
         # Define the directory containing the ECG records
-        afdb_dir = "afdb"
+        afdb_dir = "../afdb"
         records = ["08434", "08455"]  # Add all record names here
 
         for record_name in records:
@@ -272,8 +272,8 @@ def main():
             # Save the DataFrame to a CSV file
             df.to_csv(file_name, index=False)
     elif choice == "2":
-        data_dir = "data"
-        output_file = "data/afdb_data.csv"
+        data_dir = "../data"
+        output_file = "../data/afdb_data.csv"
 
         combined_df = load_and_combine_data(data_dir)
 

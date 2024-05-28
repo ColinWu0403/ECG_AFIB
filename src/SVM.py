@@ -2,19 +2,17 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils.class_weight import compute_class_weight
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from sklearn.svm import SVC
 
 
 def load_data(file_path):
-    # Load the data
     return pd.read_csv(file_path)
 
 
@@ -28,68 +26,66 @@ def prepare_data(df):
     # Filter out rows where cv > 0.5 (50 % variability)
     df = df[df['cv'] <= 0.5]
 
+    # Filter out rows where the signal_quality is lower than 0.5
+    df = df[df['signal_quality'] >= 0.5]
+
     # Normalize the data
-    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "num_N_annotations"]
+    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv']
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 
-    # Prepare the data
-    X = df[features]  # Features: SDNN, RMSSD, and cv
-    y = df['has_AFIB']  # Target: whether the patient has AFib
+    x = df[features]
+    y = df['has_AFIB']
 
-    # Address class imbalance using SMOTE
     smote = SMOTE(random_state=42)
-    x_res, y_res = smote.fit_resample(X, y)
+    x_res, y_res = smote.fit_resample(x, y)
 
     return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
 
-def train_model(x_train, y_train):
-    # Calculate class weights
-    class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-    class_weight_dict = dict(enumerate(class_weights))
+def build_svm_model(x_train, y_train):
+    # Define the parameter grid
+    param_grid = {
+        'C': [0.1, 1, 10, 100],
+        'gamma': [1, 0.1, 0.01, 0.001],
+        'kernel': ['linear', 'poly', 'rbf', 'sigmoid']
+    }
 
-    # Train the model using Random Forest
-    model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight=class_weight_dict)
-    model.fit(x_train, y_train)
-    return model
+    # Initialize the SVM model
+    model = SVC(probability=True)
+
+    # Perform grid search
+    grid = GridSearchCV(model, param_grid, refit=True, verbose=2, cv=3)
+    grid.fit(x_train, y_train)
+
+    return grid.best_estimator_
 
 
 def evaluate_model(model, x_test, y_test):
-    # Make predictions
+    y_pred_proba = model.predict_proba(x_test)
     y_pred = model.predict(x_test)
-    y_pred_proba = model.predict_proba(x_test)[:, 1]
 
-    # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     conf_matrix = confusion_matrix(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_proba[:, 1])
     class_report = classification_report(y_test, y_pred, output_dict=True)
-    roc_auc = roc_auc_score(y_test, y_pred_proba)
 
-    # Convert classification report to DataFrame
     class_report_df = pd.DataFrame(class_report).transpose()
-
-    # Add labels column
     class_report_df['labels'] = class_report_df.index
-
-    # Rearrange columns so "labels" comes first
     cols = class_report_df.columns.tolist()
     cols = [cols[-1]] + cols[:-1]
     class_report_df = class_report_df[cols]
 
-    # Create classification report table image
     create_classification_report_image(class_report_df)
-
-    # Create PDF report
     create_pdf(accuracy, roc_auc, conf_matrix)
     delete_images()
 
 
 def create_classification_report_image(class_report_df):
-    plt.figure(figsize=(10, 6))
-    plt.axis('off')  # Hide axis
-    cell_text = class_report_df.map(lambda x: f"{x:.8f}" if isinstance(x, float) else str(x))
-    table = plt.table(cellText=cell_text.values,
+    plt.figure(figsize=(12, 8))
+    plt.axis('off')
+    cell_text = class_report_df.values
+    table = plt.table(cellText=cell_text,
                       colLabels=class_report_df.columns,
                       loc='center',
                       cellLoc='center')
@@ -101,22 +97,17 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_Random_Forest_30_seconds.pdf"
+    pdf_filename = "../reports/model_evaluation_SVM.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
-    # Add classification report image
-    c.drawImage("classification_report.png", 55, 330, width=500, preserveAspectRatio=True, mask='auto')
-
-    # Add text labels
-    c.drawString(270, height - 50, f"Accuracy")
+    c.drawImage("classification_report.png", 55, 250, width=500, preserveAspectRatio=True, mask='auto')
+    c.drawString(270, height - 50, "Accuracy")
     c.drawString(242, height - 70, f"{accuracy}")
-    c.drawString(255, height - 100, f"ROC AUC Score")
+    c.drawString(255, height - 100, "ROC AUC Score")
     c.drawString(242, height - 120, f"{roc_auc}")
-
     c.drawString(245, height - 150, "Classification Report")
 
-    # Add confusion matrix image
     plt.figure(figsize=(8, 6))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
     plt.xlabel('Predicted')
@@ -126,7 +117,6 @@ def create_pdf(accuracy, roc_auc, conf_matrix):
     plt.close()
 
     c.drawImage("confusion_matrix.png", 65, 0, width=500, preserveAspectRatio=True, mask='auto')
-
     c.showPage()
     c.save()
 
@@ -136,18 +126,17 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():
-    # Load the data
     df = load_data(filename)
-
-    # Prepare the data
     x_train, x_test, y_train, y_test = prepare_data(df)
 
+    model = build_svm_model(x_train, y_train)
+
     # Train the model
-    model = train_model(x_train, y_train)
+    model.fit(x_train, y_train)
 
     # Evaluate the model
     evaluate_model(model, x_test, y_test)

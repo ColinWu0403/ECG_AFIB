@@ -13,8 +13,6 @@ from keras.src.callbacks import EarlyStopping
 from keras.src.utils import to_categorical
 from keras import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
-import optuna
-from optuna.integration import TFKerasPruningCallback
 
 
 def load_data(file_path):
@@ -51,55 +49,19 @@ def prepare_data(df):
     return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
 
-def build_lstm_model(trial, input_shape):
+# Values from Optuna:
+# Best hyperparameters:  {'units1': 107, 'dropout1': 0.20353137473826885, 'units2': 121, 'dropout2': 0.2637614252421956, 'units3': 111, 'dropout3': 0.20773434588205206}
+def build_lstm_model(input_shape):
     model = Sequential()
-    model.add(LSTM(
-        units=trial.suggest_int('units1', 32, 128),
-        return_sequences=True,
-        input_shape=input_shape
-    ))
-    model.add(Dropout(trial.suggest_float('dropout1', 0.2, 0.5)))
-    model.add(LSTM(
-        units=trial.suggest_int('units2', 32, 128),
-        return_sequences=True
-    ))
-    model.add(Dropout(trial.suggest_float('dropout2', 0.2, 0.5)))
-    model.add(LSTM(
-        units=trial.suggest_int('units3', 32, 128)
-    ))
-    model.add(Dropout(trial.suggest_float('dropout3', 0.2, 0.5)))
+    model.add(LSTM(107, return_sequences=True, input_shape=input_shape))
+    model.add(Dropout(0.20353137473826885))
+    model.add(LSTM(121, return_sequences=True))
+    model.add(Dropout(0.2637614252421956))
+    model.add(LSTM(111))
+    model.add(Dropout(0.20773434588205206))
     model.add(Dense(2, activation='softmax'))
-
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
-
-
-def objective(trial):
-    df = load_data(filename)
-    x_train, x_test, y_train, y_test = prepare_data(df)
-    input_shape = (x_train.shape[1], x_train.shape[2])
-
-    model = build_lstm_model(trial, input_shape)
-
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model.fit(x_train, y_train, epochs=50, batch_size=32, validation_split=0.2,
-              callbacks=[early_stopping, TFKerasPruningCallback(trial, 'val_accuracy')], verbose=0)
-
-    score = model.evaluate(x_test, y_test, verbose=0)
-    return score[1]  # Return validation accuracy
-
-
-# def build_lstm_model(input_shape):
-#     model = Sequential()
-#     model.add(LSTM(128, return_sequences=True, input_shape=input_shape))
-#     model.add(Dropout(0.5))
-#     model.add(LSTM(64, return_sequences=True))
-#     model.add(Dropout(0.5))
-#     model.add(LSTM(32))
-#     model.add(Dropout(0.5))
-#     model.add(Dense(2, activation='softmax'))
-#     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-#     return model
 
 
 def evaluate_model(model, x_test, y_test):
@@ -139,7 +101,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_LSTM_optm.pdf"
+    pdf_filename = "../reports/model_evaluation_LSTM.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -168,40 +130,15 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():
-    study = optuna.create_study(direction='maximize')
-    study.optimize(objective, n_trials=100)
-
-    print("Best hyperparameters: ", study.best_params)
-
     df = load_data(filename)
     x_train, x_test, y_train, y_test = prepare_data(df)
 
     input_shape = (x_train.shape[1], x_train.shape[2])
-    best_params = study.best_params
-
-    model = Sequential()
-    model.add(LSTM(
-        units=best_params['units1'],
-        return_sequences=True,
-        input_shape=input_shape
-    ))
-    model.add(Dropout(best_params['dropout1']))
-    model.add(LSTM(
-        units=best_params['units2'],
-        return_sequences=True
-    ))
-    model.add(Dropout(best_params['dropout2']))
-    model.add(LSTM(
-        units=best_params['units3']
-    ))
-    model.add(Dropout(best_params['dropout3']))
-    model.add(Dense(2, activation='softmax'))
-
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model = build_lstm_model(input_shape)
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model.fit(x_train, y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
