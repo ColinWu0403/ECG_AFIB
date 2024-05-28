@@ -9,9 +9,10 @@ COPY requirements.txt .
 
 # Install the dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install optuna-integration
 
 # Copy the rest of the application code to the working directory
 COPY . /
 
 # Specify the command to run the application
-CMD ["python", "main.py"]
+CMD ["python", "CNN.py"]

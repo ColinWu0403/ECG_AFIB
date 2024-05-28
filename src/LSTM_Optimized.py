@@ -139,7 +139,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_LSTM_optm.pdf"
+    pdf_filename = "../reports/model_evaluation_LSTM_optm.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -168,7 +168,7 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():

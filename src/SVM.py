@@ -2,17 +2,14 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from keras.src.callbacks import EarlyStopping
-from keras import Sequential
-from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization
-from keras.src.utils import to_categorical
+from sklearn.svm import SVC
 
 
 def load_data(file_path):
@@ -43,53 +40,35 @@ def prepare_data(df):
     smote = SMOTE(random_state=42)
     x_res, y_res = smote.fit_resample(x, y)
 
-    x_res = x_res.values.reshape((x_res.shape[0], 1, x_res.shape[1]))
-    y_res = to_categorical(y_res)
-
     return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
 
-def build_cnn_model(input_shape):
-    model = Sequential()
+def build_svm_model(x_train, y_train):
+    # Define the parameter grid
+    param_grid = {
+        'C': [0.1, 1, 10, 100],
+        'gamma': [1, 0.1, 0.01, 0.001],
+        'kernel': ['linear', 'poly', 'rbf', 'sigmoid']
+    }
 
-    # First Convolutional Block
-    model.add(Conv1D(256, kernel_size=1, activation='relu', input_shape=input_shape))
-    model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
+    # Initialize the SVM model
+    model = SVC(probability=True)
 
-    # Second Convolutional Block
-    model.add(Conv1D(128, kernel_size=1, activation='relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
+    # Perform grid search
+    grid = GridSearchCV(model, param_grid, refit=True, verbose=2, cv=3)
+    grid.fit(x_train, y_train)
 
-    # Third Convolutional Block
-    model.add(Conv1D(64, kernel_size=1, activation='relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
-
-    model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.5))
-
-    # Output Layer
-    model.add(Dense(2, activation='softmax'))
-
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    return model
+    return grid.best_estimator_
 
 
 def evaluate_model(model, x_test, y_test):
-    y_pred_proba = model.predict(x_test)
-    y_pred = np.argmax(y_pred_proba, axis=1)
-    y_true = np.argmax(y_test, axis=1)
+    y_pred_proba = model.predict_proba(x_test)
+    y_pred = model.predict(x_test)
 
-    accuracy = accuracy_score(y_true, y_pred)
-    conf_matrix = confusion_matrix(y_true, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_proba)
-    class_report = classification_report(y_true, y_pred, output_dict=True)
+    accuracy = accuracy_score(y_test, y_pred)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_proba[:, 1])
+    class_report = classification_report(y_test, y_pred, output_dict=True)
 
     class_report_df = pd.DataFrame(class_report).transpose()
     class_report_df['labels'] = class_report_df.index
@@ -118,7 +97,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_CNN.pdf"
+    pdf_filename = "../reports/model_evaluation_SVM.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -147,19 +126,19 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():
     df = load_data(filename)
     x_train, x_test, y_train, y_test = prepare_data(df)
 
-    input_shape = (x_train.shape[1], x_train.shape[2])
-    model = build_cnn_model(input_shape)
+    model = build_svm_model(x_train, y_train)
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model.fit(x_train, y_train, epochs=100, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
+    # Train the model
+    model.fit(x_train, y_train)
 
+    # Evaluate the model
     evaluate_model(model, x_test, y_test)
 
 
