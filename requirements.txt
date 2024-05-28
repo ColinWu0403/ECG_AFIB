@@ -10,3 +10,4 @@ imblearn==0.0
 reportlab~=4.2.0
 tensorflow~=2.16.1
 keras~=3.3.3
+optuna~=3.6.1
