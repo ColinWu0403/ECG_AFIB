@@ -16,22 +16,22 @@ install --no-cache-dir -r requirements.txt
 
 ## Models
 
-#### Random Forest Classifier
+### Random Forest Classifier
 Used sci-kit learn's RandomForestClassifier to classify an ECG signal in a small-time interval as Normal or AFIB.
 
-#### LSTM
+### LSTM
 Used TensorFlow to create a 3 layer LSTM (RNN) model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
-#### CNN
+### CNN
 Used TensorFlow to create a 3 layer CNN model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
-#### SVM
+### SVM
 Used sci-kit learn's SVC model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
-#### Gradient Boost
+### Gradient Boost
 Used xgboost to create a Gradient Boosting model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
-#### Resnet
+### Resnet
 Used TensorFlow to create a model with 1 Convolutional layer and 2 Residual blocks to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ## Citations
