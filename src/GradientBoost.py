@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -9,6 +9,7 @@ import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from sklearn.ensemble import GradientBoostingClassifier
+from xgboost import XGBClassifier
 
 
 def load_data(file_path):
@@ -45,22 +46,21 @@ def prepare_data(df):
 def build_gradient_boosting_model(x_train, y_train):
     # Define the parameter grid
     param_grid = {
-        'n_estimators': [100, 200, 300],
-        'learning_rate': [0.01, 0.1, 0.2],
-        'max_depth': [3, 4, 5],
-        'min_samples_split': [2, 5, 10],
-        'min_samples_leaf': [1, 2, 4],
-        'subsample': [0.8, 1.0]
+        'n_estimators': [100, 200, 300, 400, 500],
+        'learning_rate': [0.01, 0.05, 0.1, 0.2],
+        'max_depth': [3, 4, 5, 6, 7, 8],
+        'subsample': [0.6, 0.8, 1.0],
+        'colsample_bytree': [0.6, 0.8, 1.0],
+        'gamma': [0, 0.1, 0.2, 0.3],
+        'min_child_weight': [1, 2, 3]
     }
 
-    # Initialize the Gradient Boosting model
-    model = GradientBoostingClassifier()
+    model = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 
-    # Perform grid search
-    grid = GridSearchCV(model, param_grid, refit=True, verbose=2, cv=3)
-    grid.fit(x_train, y_train)
+    random_search = RandomizedSearchCV(model, param_grid, n_iter=1000, cv=3, verbose=2, random_state=42, n_jobs=-1)
+    random_search.fit(x_train, y_train)
 
-    return grid.best_estimator_
+    return random_search.best_estimator_
 
 
 def evaluate_model(model, x_test, y_test):
@@ -99,7 +99,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "reports/model_evaluation_Gradient_Boosting.pdf"
+    pdf_filename = "../reports/model_evaluation_Gradient_Boosting.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
@@ -128,7 +128,7 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = 'data/afdb_data.csv'
+filename = '../data/afdb_data.csv'
 
 
 def main():
