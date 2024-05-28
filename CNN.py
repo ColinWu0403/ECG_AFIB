@@ -56,23 +56,23 @@ def build_cnn_model(input_shape):
     model.add(Conv1D(256, kernel_size=1, activation='relu', input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.11519236749638968))
 
     # Second Convolutional Block
-    model.add(Conv1D(128, kernel_size=1, activation='relu'))
+    model.add(Conv1D(173, kernel_size=1, activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.23389094244435107))
 
     # Third Convolutional Block
-    model.add(Conv1D(64, kernel_size=1, activation='relu'))
+    model.add(Conv1D(71, kernel_size=1, activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPooling1D(pool_size=1))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.2597374119309316))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.5))
+    model.add(Dense(717, activation='relu'))
+    model.add(Dropout(0.22070149417575943))
 
     # Output Layer
     model.add(Dense(2, activation='softmax'))
