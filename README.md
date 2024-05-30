@@ -7,7 +7,9 @@ This project is a classification model in Python that predicts if a patient has 
 
 The model is written in Python using scikit-learn and TensorFlow Keras for classification and uses wfdb and Neurokit2 to analyze ECG signals and measure data to export them to a dataset (in the data/ folder as .csv files).
 
-The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database. The afdb folder contains the signals, but the actual files are not pushed as they are too large. You can download them on the official website (link is in the citation below).
+The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (afdb) and the PTB-XL ECG Databse (ptbxl).
+
+The afdb and ptb folders contains the signals for the respective database, but the actual files are not pushed as they are too large. You can download them on the official website (link is in the citation below).
 
 ## Install required libraries
 ```
@@ -39,4 +41,5 @@ Used TensorFlow to create a model with 1 Convolutional layer and 2 Residual bloc
 - Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lespinasse, F., Pham, H.,
 Schölzel, C., & Chen, S. A. (2021). NeuroKit2: A Python toolbox for neurophysiological signal processing.
 Behavior Research Methods, 53(4), 1689–1696. https://doi.org/10.3758/s13428-020-01516-y
+- Wagner, P., Strodthoff, N., Bousseljot, R., Samek, W., & Schaeffter, T. (2022). PTB-XL, a large publicly available electrocardiography dataset (version 1.0.3). PhysioNet. https://doi.org/10.13026/kfzx-aw45.
 - Xie, C., McCullum, L., Johnson, A., Pollard, T., Gow, B., & Moody, B. (2023). Waveform Database Software Package (WFDB) for Python (version 4.1.0). PhysioNet. https://doi.org/10.13026/9njx-6322.
