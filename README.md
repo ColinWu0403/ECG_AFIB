@@ -7,9 +7,9 @@ This project is a classification model in Python that predicts if a patient has 
 
 The model is written in Python using scikit-learn and TensorFlow Keras for classification and uses wfdb and Neurokit2 to analyze ECG signals and measure data to export them to a dataset (in the data/ folder as .csv files).
 
-The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (afdb) and the PTB-XL ECG Databse (ptbxl).
+The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (afdb) and the PTB-XL ECG Database (ptb).
 
-The afdb and ptb folders contains the signals for the respective database, but the actual files are not pushed as they are too large. You can download them on the official website (link is in the citation below).
+The afdb/ and ptb/ folders contain the respective database signals, but the actual files are not pushed as they are too large. You can download them on the official website (the link is in the citation below).
 
 ## Install required libraries
 ```
@@ -22,7 +22,7 @@ install --no-cache-dir -r requirements.txt
 Used sci-kit learn's RandomForestClassifier to classify an ECG signal in a small-time interval as Normal or AFIB.
 
 ### LSTM
-Used TensorFlow to create a 3 layer LSTM (RNN) model to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used TensorFlow to create a 3-layer LSTM (RNN) model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ### CNN
 Used TensorFlow to create a 3 layer CNN model to classify ECG signals in a 30-second time interval as Normal or AFIB.
