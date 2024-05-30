@@ -159,7 +159,7 @@ def process_ecg_record(record_path, record_name):
     sampling_rate = record.fs
     total_samples = record.sig_len
 
-    # Split the signal into 30 min intervals
+    # Split the signal into 30 second intervals
     thirty_sec_intervals = sampling_rate * 30
 
     # Calculate the number of intervals needed to cover the entire signal
