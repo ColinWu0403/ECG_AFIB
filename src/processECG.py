@@ -8,7 +8,7 @@ total_N_annotations = 0
 total_AFIB_annotations = 0
 
 
-def process_ecg_interval(record_path, record_name, start_sample, end_sample, record, interval_index):
+def process_ecg_interval(record_path, record_name, start_sample, end_sample, interval_index):
     global total_N_annotations
     global total_AFIB_annotations
 
@@ -104,6 +104,13 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, rec
         # https://www.researchgate.net/publication/258514321_The_Usefulness_of_the_Coefficient_of_Variation_of_Electrocardiographic_RR_Interval_as_an_Index_of_Cardiovascular_Function_and_its_Correlation_with_Age_and_Stroke
     }
 
+    # deal with ptb database data
+    ptb_afib = False
+    contains_lr = 'lr' in features["record_name"]
+    contains_hr = 'hr' in features["record_name"]
+    if contains_lr or contains_hr:
+        ptb_afib = True
+
     # Add annotation-related features
     if annotations is not None:
         features["num_annotations"] = len(annotations.sample)
@@ -125,9 +132,23 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, rec
         features["num_AFIB_annotations"] = num_AFIB_annotations
         features["total_N_annotations"] = total_N_annotations
         features["total_AFIB_annotations"] = total_AFIB_annotations
+    else:
+        if ptb_afib:
+            features["num_annotations"] = 1
+            features["num_AFIB_annotations"] = 1
+            features["total_AFIB_annotations"] = 1
+        else:
+            features["num_annotations"] = 0
+            features["num_AFIB_annotations"] = 0
+            features["total_AFIB_annotations"] = 0
+
+        features["num_N_annotations"] = 0
+        features["total_N_annotations"] = 0
 
     if qrs_annotations is not None:
         features["num_qrs_annotations"] = len(qrs_annotations.sample)
+    else:
+        features["num_qrs_annotations"] = 0
 
     return features
 
@@ -138,17 +159,20 @@ def process_ecg_record(record_path, record_name):
     sampling_rate = record.fs
     total_samples = record.sig_len
 
-    # Split the signal into 5 min intervals
+    # Split the signal into 30 second intervals
     thirty_sec_intervals = sampling_rate * 30
 
+    # Calculate the number of intervals needed to cover the entire signal
     num_intervals = total_samples // thirty_sec_intervals
+    if total_samples % thirty_sec_intervals != 0:
+        num_intervals += 1  # Add one more interval for the remaining samples
     all_features = []
 
     for i in range(num_intervals):
         start_sample = i * thirty_sec_intervals
         end_sample = start_sample + thirty_sec_intervals
         try:
-            features = process_ecg_interval(record_path, record_name, start_sample, end_sample, record, i)
+            features = process_ecg_interval(record_path, record_name, start_sample, end_sample, i)
             all_features.append(features)
         except Exception as e:
             print(f"Error processing interval {i}: {e}")
@@ -251,28 +275,84 @@ def save_combined_data(df, output_file):
     df.to_csv(output_file, index=False)
 
 
+def extract_file_paths_and_names(csv_file, f_type):
+    # Read the CSV file
+    df = pd.read_csv(csv_file)
+
+    # Initialize lists to hold full paths and file names
+    full_paths = []
+    file_names = []
+
+    # Iterate over each row in the DataFrame
+    for index, row in df.iterrows():
+        if f_type == 'hr':
+            full_path = row['filename_hr']
+        elif f_type == 'lr':
+            full_path = row['filename_hr']
+        else:
+            full_path = ""
+
+        file_name = full_path.split('/')[-1]
+
+        full_paths.append(full_path)
+        file_names.append(file_name)
+
+    return full_paths, file_names
+
+
+def process_all_ecg_records(csv_file, ptb_dir, output_file, f_type):
+    records, file_names = extract_file_paths_and_names(csv_file, f_type)
+
+    print(records)
+    print(file_names)
+
+    all_features = []
+    i = 0
+    for record_name in records:
+        record_path = os.path.join(ptb_dir, record_name)
+        features = process_ecg_record(record_path, file_names[i])
+        if features:
+            all_features.extend(features)
+        i = i + 1
+
+    df = pd.DataFrame(all_features)
+    df.to_csv(output_file, index=False)
+    print(f"Saved all features to {output_file}")
+
+
 def main():
-    print("1. process ECG signals and export to .csv files")
-    print("2. combine all data")
+    print("1. process ECG signals from afib/ and export to .csv files")
+    print("2. process ECG signals from ptb/ and export to .csv files")
+    print("3. combine all data")
     choice = input("Enter the number of your choice: ")
 
     if choice == "1":
         # Define the directory containing the ECG records
-        afdb_dir = "../afdb"
-        records = ["08434", "08455"]  # Add all record names here
+        ptb_dir = "../ptb"
+
+        records = [""]  # add records here
 
         for record_name in records:
-            record_path = os.path.join(afdb_dir, record_name)
+            record_path = os.path.join(ptb_dir, record_name)
             features = process_ecg_record(record_path, record_name)
 
             # Convert the list of dictionaries to a DataFrame
             df = pd.DataFrame(features)
-            file_name = "data/" + record_name + "_features_30.csv"
+            file_name = "../data/30_sec_intervals/" + record_name + "_features.csv"
 
             # Save the DataFrame to a CSV file
             df.to_csv(file_name, index=False)
     elif choice == "2":
-        data_dir = "../data"
+        ptb_dir = "../ptb"
+        csv_file = "../ptb/ptbxl_afib.csv"
+        output_file = "../data/30_sec_intervals/hr_features.csv"
+
+        if not os.path.exists("../data/30_sec_intervals"):
+            os.makedirs("../data/30_sec_intervals")
+
+        process_all_ecg_records(csv_file, ptb_dir, output_file, "hr")
+    elif choice == "3":
+        data_dir = "../data/30_sec_intervals"
         output_file = "../data/afdb_data.csv"
 
         combined_df = load_and_combine_data(data_dir)
