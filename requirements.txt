@@ -12,3 +12,4 @@ tensorflow~=2.16.1
 keras~=3.3.3
 optuna~=3.6.1
 xgboost~=2.0.3
+joblib~=1.4.2
