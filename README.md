@@ -11,6 +11,8 @@ The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (afdb) a
 
 The afdb/ and ptb/ folders contain the respective database signals, but the actual files are not pushed as they are too large. You can download them on the official website (the link is in the citation below).
 
+The models/ folder contains the generated .pkl files for the models.
+
 ## Install required libraries
 ```
 install --no-cache-dir -r requirements.txt

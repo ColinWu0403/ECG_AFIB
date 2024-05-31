@@ -82,12 +82,12 @@ def evaluate_model(model, x_test, y_test):
     cols = [cols[-1]] + cols[:-1]
     class_report_df = class_report_df[cols]
 
-    # # Create classification report table image
-    # create_classification_report_image(class_report_df)
-    #
-    # # Create PDF report
-    # create_pdf(accuracy, roc_auc, conf_matrix)
-    # delete_images()
+    # Create classification report table image
+    create_classification_report_image(class_report_df)
+
+    # Create PDF report
+    create_pdf(accuracy, roc_auc, conf_matrix)
+    delete_images()
 
 
 def create_classification_report_image(class_report_df):
