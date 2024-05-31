@@ -358,7 +358,7 @@ def main():
         process_all_ecg_records(csv_file, ptb_dir, output_file, "hr")
     elif choice == "3":
         data_dir = "../data/10_sec_intervals"
-        output_file = "../data/10_sec_intervals/afdb_data.csv"
+        output_file = "../data/afdb_data.csv"
 
         combined_df = load_and_combine_data(data_dir)
 
