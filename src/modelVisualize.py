@@ -5,8 +5,8 @@ from sklearn.preprocessing import StandardScaler
 
 
 # Load the model
-def load_model():
-    model = joblib.load('../models/random_forest_model.pkl')
+def load_model(model_path):
+    model = joblib.load(model_path)
     return model
 
 
@@ -146,6 +146,16 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
 
 # Main function to run the predictions and plot the results
 def main():
+    print("Models:")
+    print("1. Random Forest Classifier")
+
+    model_type = str(input("Enter the type of model: "))
+    if model_type == "1":
+        model_path = '../models/random_forest_model.pkl'
+    else:
+        print("Error: model does not exist.")
+        return
+
     while True:
         print("Choose the type of plot:")
         print("1. Heart Rate Mean")
@@ -171,10 +181,10 @@ def main():
             continue
 
         # Load your trained model
-        model = load_model()
+        model = load_model(model_path)
 
         # Load the ECG data
-        df = load_data('../data/afdb_data.csv', record_name)  # Specify the path to the data CSV file and record name
+        df = load_data('../data/afdb_data.csv', record_name)
 
         # Preprocess the data
         df, features = preprocess_data(df)
