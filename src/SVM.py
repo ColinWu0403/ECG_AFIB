@@ -1,5 +1,5 @@
+import joblib
 import pandas as pd
-import numpy as np
 import os
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -57,6 +57,9 @@ def build_svm_model(x_train, y_train):
     # Perform grid search
     grid = GridSearchCV(model, param_grid, refit=True, verbose=2, cv=3)
     grid.fit(x_train, y_train)
+
+    # Save the model
+    joblib.dump(model, '../models/SVM_model.pkl')
 
     return grid.best_estimator_
 

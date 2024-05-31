@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -8,7 +9,6 @@ from imblearn.over_sampling import SMOTE
 import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from sklearn.ensemble import GradientBoostingClassifier
 from xgboost import XGBClassifier
 
 
@@ -56,6 +56,9 @@ def build_gradient_boosting_model(x_train, y_train):
     }
 
     model = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+
+    # Save the model
+    joblib.dump(model, '../models/XGBoost_model.pkl')
 
     random_search = RandomizedSearchCV(model, param_grid, n_iter=1000, cv=3, verbose=2, random_state=42, n_jobs=-1)
     random_search.fit(x_train, y_train)

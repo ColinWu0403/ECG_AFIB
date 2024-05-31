@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -78,6 +79,9 @@ def build_cnn_model(input_shape):
     model.add(Dense(2, activation='softmax'))
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Save the model
+    joblib.dump(model, '../models/CNN_model.pkl')
     return model
 
 

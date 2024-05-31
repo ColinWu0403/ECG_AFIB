@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -11,11 +12,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import tensorflow as tf
 from keras.src.models import Model
-from tensorflow.keras.layers import Input, Conv1D, BatchNormalization, Activation, Add, GlobalAveragePooling1D, Dense, Dropout
+from tensorflow.keras.layers import Input, Conv1D, BatchNormalization, Activation, Add, GlobalAveragePooling1D, Dense, \
+    Dropout
 from keras.src.callbacks import EarlyStopping
+
 
 def load_data(file_path):
     return pd.read_csv(file_path)
+
 
 def prepare_data(df):
     # Filter out rows where SDNN > 500 ms
@@ -46,6 +50,7 @@ def prepare_data(df):
 
     return train_test_split(x_res, y_res, test_size=0.2, random_state=42)
 
+
 def residual_block(x, filters, kernel_size=3, stride=1):
     shortcut = x
 
@@ -65,6 +70,7 @@ def residual_block(x, filters, kernel_size=3, stride=1):
     x = Activation('relu')(x)
 
     return x
+
 
 def build_resnet_model(input_shape, num_classes):
     inputs = Input(shape=input_shape)
@@ -89,7 +95,12 @@ def build_resnet_model(input_shape, num_classes):
 
     model = Model(inputs, outputs)
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Save the model
+    joblib.dump(model, '../models/resnet_model.pkl')
+
     return model
+
 
 def evaluate_model(model, x_test, y_test):
     y_pred_proba = model.predict(x_test)
@@ -111,6 +122,7 @@ def evaluate_model(model, x_test, y_test):
     create_pdf(accuracy, roc_auc, conf_matrix)
     delete_images()
 
+
 def create_classification_report_image(class_report_df):
     plt.figure(figsize=(12, 8))
     plt.axis('off')
@@ -124,6 +136,7 @@ def create_classification_report_image(class_report_df):
     table.scale(1, 2)
     plt.savefig("classification_report.png", bbox_inches='tight')
     plt.close()
+
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
     pdf_filename = "../reports/model_evaluation_ResNet.pdf"
@@ -149,11 +162,14 @@ def create_pdf(accuracy, roc_auc, conf_matrix):
     c.showPage()
     c.save()
 
+
 def delete_images():
     os.remove("classification_report.png")
     os.remove("confusion_matrix.png")
 
+
 filename = '../data/afdb_data.csv'
+
 
 def main():
     df = load_data(filename)
@@ -167,6 +183,7 @@ def main():
 
     # Evaluate the model
     evaluate_model(model, x_test, y_test)
+
 
 if __name__ == "__main__":
     main()
