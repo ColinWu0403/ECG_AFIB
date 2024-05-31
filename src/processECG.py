@@ -19,6 +19,10 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, int
     # Ensure that end_sample does not exceed the total length of the signal
     end_sample = min(end_sample, total_samples)
 
+    if end_sample - start_sample < 10:  # Ensure the interval has at least 10 samples
+        print(f"Error processing interval {interval_index}: The data length is too small to be segmented.")
+        return None
+
     record_segment = wfdb.rdrecord(record_path, sampfrom=start_sample, sampto=end_sample)
     ecg_signal = record_segment.p_signal[:, 0]  # Assuming the first channel is ECG
     sampling_rate = record_segment.fs
@@ -71,7 +75,7 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, int
     # Prepare a dictionary of extracted features
     features = {
         "record_name": record_name,
-        "start_time": interval_index / 2,  # in minutes
+        "start_time": interval_index / 6,  # in minutes
         "sampling_rate": sampling_rate,
         "heart_rate_mean": heart_rate.mean(),
         "heart_rate_std": heart_rate.std(),
@@ -159,21 +163,22 @@ def process_ecg_record(record_path, record_name):
     sampling_rate = record.fs
     total_samples = record.sig_len
 
-    # Split the signal into 30 second intervals
-    thirty_sec_intervals = sampling_rate * 30
+    # Split the signal into 10 second intervals
+    ten_sec_intervals = sampling_rate * 10
 
     # Calculate the number of intervals needed to cover the entire signal
-    num_intervals = total_samples // thirty_sec_intervals
-    if total_samples % thirty_sec_intervals != 0:
+    num_intervals = total_samples // ten_sec_intervals
+    if total_samples % ten_sec_intervals != 0:
         num_intervals += 1  # Add one more interval for the remaining samples
     all_features = []
 
     for i in range(num_intervals):
-        start_sample = i * thirty_sec_intervals
-        end_sample = start_sample + thirty_sec_intervals
+        start_sample = i * ten_sec_intervals
+        end_sample = start_sample + ten_sec_intervals
         try:
             features = process_ecg_interval(record_path, record_name, start_sample, end_sample, i)
-            all_features.append(features)
+            if features is not None:
+                all_features.append(features)
         except Exception as e:
             print(f"Error processing interval {i}: {e}")
 
@@ -328,9 +333,9 @@ def main():
 
     if choice == "1":
         # Define the directory containing the ECG records
-        ptb_dir = "../ptb"
+        ptb_dir = "../afdb"
 
-        records = [""]  # add records here
+        records = ["04043"]  # add records here
 
         for record_name in records:
             record_path = os.path.join(ptb_dir, record_name)
@@ -338,22 +343,22 @@ def main():
 
             # Convert the list of dictionaries to a DataFrame
             df = pd.DataFrame(features)
-            file_name = "../data/30_sec_intervals/" + record_name + "_features.csv"
+            file_name = "../data/10_sec_intervals/" + record_name + "_features.csv"
 
             # Save the DataFrame to a CSV file
             df.to_csv(file_name, index=False)
     elif choice == "2":
         ptb_dir = "../ptb"
         csv_file = "../ptb/ptbxl_afib.csv"
-        output_file = "../data/30_sec_intervals/hr_features.csv"
+        output_file = "../data/10_sec_intervals/hr_features.csv"
 
-        if not os.path.exists("../data/30_sec_intervals"):
-            os.makedirs("../data/30_sec_intervals")
+        if not os.path.exists("../data/10_sec_intervals"):
+            os.makedirs("../data/10_sec_intervals")
 
         process_all_ecg_records(csv_file, ptb_dir, output_file, "hr")
     elif choice == "3":
-        data_dir = "../data/30_sec_intervals"
-        output_file = "../data/afdb_data.csv"
+        data_dir = "../data/10_sec_intervals"
+        output_file = "../data/10_sec_intervals/afdb_data.csv"
 
         combined_df = load_and_combine_data(data_dir)
 
