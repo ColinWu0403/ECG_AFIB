@@ -11,6 +11,7 @@ from imblearn.over_sampling import SMOTE
 import seaborn as sns
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import joblib
 
 
 def load_data(file_path):
@@ -52,6 +53,10 @@ def train_model(x_train, y_train):
     # Train the model using Random Forest
     model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight=class_weight_dict)
     model.fit(x_train, y_train)
+
+    # Save the model
+    joblib.dump(model, '../models/random_forest_model.pkl')
+
     return model
 
 
@@ -77,12 +82,12 @@ def evaluate_model(model, x_test, y_test):
     cols = [cols[-1]] + cols[:-1]
     class_report_df = class_report_df[cols]
 
-    # Create classification report table image
-    create_classification_report_image(class_report_df)
-
-    # Create PDF report
-    create_pdf(accuracy, roc_auc, conf_matrix)
-    delete_images()
+    # # Create classification report table image
+    # create_classification_report_image(class_report_df)
+    #
+    # # Create PDF report
+    # create_pdf(accuracy, roc_auc, conf_matrix)
+    # delete_images()
 
 
 def create_classification_report_image(class_report_df):
@@ -101,7 +106,7 @@ def create_classification_report_image(class_report_df):
 
 
 def create_pdf(accuracy, roc_auc, conf_matrix):
-    pdf_filename = "../reports/model_evaluation_Random_Forest_30_seconds.pdf"
+    pdf_filename = "../reports/model_evaluation_Random_Forest.pdf"
     c = canvas.Canvas(pdf_filename, pagesize=letter)
     width, height = letter
 
