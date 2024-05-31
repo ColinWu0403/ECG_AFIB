@@ -209,11 +209,14 @@ def main():
     print("2. LSTM")
     print("3. CNN")
     print("4. SVM")
-    print("5. Gradient Boosting Classifier")
+    print("5. Gradient Boosting (XGBoost)")
     print("6. ResNet")
+    print("0. Exit")
 
     model_type = str(input("Enter the type of model: "))
-    if model_type == "1":
+    if model_type == "0":
+        return
+    elif model_type == "1":
         model_path = '../models/random_forest_model.pkl'
     elif model_type == "2":
         model_path = '../models/LSTM_model.pkl'
