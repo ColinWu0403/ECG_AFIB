@@ -206,10 +206,25 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
 def main():
     print("Models:")
     print("1. Random Forest Classifier")
+    print("2. LSTM")
+    print("3. CNN")
+    print("4. SVM")
+    print("5. Gradient Boosting Classifier")
+    print("6. ResNet")
 
     model_type = str(input("Enter the type of model: "))
     if model_type == "1":
         model_path = '../models/random_forest_model.pkl'
+    elif model_type == "2":
+        model_path = '../models/LSTM_model.pkl'
+    elif model_type == "3":
+        model_path = '../models/CNN_model.pkl'
+    elif model_type == "4":
+        model_path = '../models/SVM_model.pkl'
+    elif model_type == "5":
+        model_path = '../models/XGBoost_model.pkl'
+    elif model_type == "6":
+        model_path = '../models/resnet_model.pkl'
     else:
         print("Error: model does not exist.")
         return
