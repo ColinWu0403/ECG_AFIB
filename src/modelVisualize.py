@@ -1,5 +1,7 @@
-import joblib
+import wfdb
 import matplotlib.pyplot as plt
+import numpy as np
+import joblib
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
@@ -22,7 +24,10 @@ def preprocess_data(df):
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 
-    return df, features
+    # Add sampling_rate column
+    df['sampling_rate'] = df['sampling_rate'].astype(int)
+
+    return df, df[features], df[features].join(df['sampling_rate'])
 
 
 # Load the data for a specific patient
@@ -144,6 +149,59 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
     plt.show()
 
 
+# Plot ECG signal with markers for Afib predictions
+def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time, end_time):
+    plt.figure(figsize=(15, 6))
+
+    # Calculate the indices corresponding to the start and end times
+    start_index = int(start_time * sampling_rate)
+    end_index = min(int(end_time * sampling_rate), len(ecg_signal))  # Ensure end_index does not exceed signal length
+
+    # Extract the ECG signal and its corresponding time array for the specified interval
+    ecg_interval = ecg_signal[start_index:end_index]
+    time_interval = np.arange(start_time, start_time + len(ecg_interval) / sampling_rate, 1 / sampling_rate) / 60  # Convert to minutes
+
+    # Plot ECG signal
+    plt.plot(time_interval, ecg_interval, color='black')
+
+    # Add markers for Afib predictions
+    interval_length = 10  # 10-second intervals
+    start_prediction_index = int(start_time / interval_length)
+    end_prediction_index = int(end_time / interval_length)
+
+    # Extract the relevant predictions for the interval
+    relevant_predictions = predictions[start_prediction_index:end_prediction_index]
+
+    for i, pred in enumerate(relevant_predictions):
+        interval_start = start_time + i * interval_length  # Interval start in seconds
+        interval_end = start_time + (i + 1) * interval_length  # Interval end in seconds
+
+        if interval_start >= end_time:  # Stop if interval exceeds signal length
+            break
+
+        interval_start_min = interval_start / 60  # Convert interval start to minutes
+        interval_end_min = interval_end / 60  # Convert interval end to minutes
+
+        if pred == 1:
+            plt.axvspan(interval_start_min, interval_end_min, color='red', alpha=0.75)  # Mark as red if Afib
+        else:
+            plt.axvspan(interval_start_min, interval_end_min, color='green', alpha=0.05)  # Mark as green if normal
+
+    # Convert start and end times to hours
+    start_time_hours = start_time / 3600
+    end_time_hours = end_time / 3600
+
+    main_title = "ECG Signal with Afib Predictions"
+    subtitle1 = f"Start Time: {start_time / 60:.2f} minutes ({start_time_hours:.2f} hours)"
+    subtitle2 = f"End Time: {end_time / 60:.2f} minutes ({end_time_hours:.2f} hours)"
+
+    # Include start time in the title (converted to minutes)
+    plt.xlabel('Time (minutes)')
+    plt.ylabel('ECG Signal')
+    plt.title(f'{main_title}\n{subtitle1}\n{subtitle2}')
+    plt.show()
+
+
 # Main function to run the predictions and plot the results
 def main():
     print("Models:")
@@ -162,6 +220,7 @@ def main():
         print("2. HRV SDNN")
         print("3. HRV RMSSD")
         print("4. CV (Coefficient of Variation)")
+        print("5. ECG Signal Visualization")
         print("0. Exit")
         choice = input("Enter your choice: ")
 
@@ -173,6 +232,8 @@ def main():
             plot_function = plot_hrv_rmssd_with_predictions
         elif choice == "4":
             plot_function = plot_cv_with_predictions
+        elif choice == "5":
+            plot_function = plot_ecg_with_predictions
         elif choice == "0":
             print("Exiting program.")
             break
@@ -187,13 +248,33 @@ def main():
         df = load_data('../data/afdb_data.csv', record_name)
 
         # Preprocess the data
-        df, features = preprocess_data(df)
+        df, features, features_sample = preprocess_data(df)
 
         # Predict AFib in each interval
-        predictions = model.predict(df[features])
+        predictions = model.predict(features)
 
-        # Plot based on the selected type
-        plot_function(df, predictions)
+        if choice != "5":
+            # Plot based on the selected type
+            plot_function(df, predictions)
+        else:
+            record_path = str("../afdb/0" + record_name)
+            # Load the ECG data
+            signals, fields = wfdb.rdsamp(record_path)  # Assuming you have the PhysioNet database downloaded
+            ecg_signal = signals[:, 0]  # Extract the first channel (ECG signal)
+            sampling_rate = int(features_sample["sampling_rate"].iloc[0])  # Sampling rate from the features DataFrame
+
+            # Define the time interval for plotting (30 minutes)
+            interval_length_minutes = 30
+            interval_length_seconds = interval_length_minutes * 60
+            total_duration_seconds = len(ecg_signal) / sampling_rate
+            num_intervals = int(total_duration_seconds / interval_length_seconds)
+
+            for i in range(num_intervals):
+                start_time = i * interval_length_seconds
+                end_time = (i + 1) * interval_length_seconds
+
+                # Plot ECG with Afib predictions for each 30-minute interval
+                plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time, end_time)
 
 
 if __name__ == "__main__":
