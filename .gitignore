@@ -11,4 +11,5 @@ venv
 *.qrs-
 *.qrsc
 *.xws
+*.pkl
 .DS_Store
