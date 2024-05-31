@@ -15,4 +15,6 @@ RUN pip install optuna-integration
 COPY . /
 
 # Specify the command to run the application
-CMD ["python", "CNN.py"]
+CMD ["python", "src/processECG.py"]
+
+# docker run -v ${pwd}/data/:/data -it --rm ecg_ml
