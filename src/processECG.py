@@ -4,13 +4,19 @@ import pandas as pd
 import numpy as np
 import os
 
+
+# Global variables to keep track of the last annotation state
 total_N_annotations = 0
 total_AFIB_annotations = 0
+last_annotation = None
+last_annotation_type = None
 
 
 def process_ecg_interval(record_path, record_name, start_sample, end_sample, interval_index):
     global total_N_annotations
     global total_AFIB_annotations
+    global last_annotation
+    global last_annotation_type
 
     # Read the header of the record to get metadata
     record_header = wfdb.rdheader(record_path)
@@ -126,11 +132,15 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, int
         if aux_notes:
             for note in aux_notes:
                 if note == '(N':
-                    num_N_annotations += 1
+                    num_N_annotations = 1
+                    num_AFIB_annotations = 0
                     total_N_annotations += 1
+                    last_annotation = 'N'
                 elif note == '(AFIB':
-                    num_AFIB_annotations += 1
+                    num_N_annotations = 0
+                    num_AFIB_annotations = 1
                     total_AFIB_annotations += 1
+                    last_annotation = 'AFIB'
 
         features["num_N_annotations"] = num_N_annotations
         features["num_AFIB_annotations"] = num_AFIB_annotations
@@ -148,6 +158,14 @@ def process_ecg_interval(record_path, record_name, start_sample, end_sample, int
 
         features["num_N_annotations"] = 0
         features["total_N_annotations"] = 0
+
+    # Update the annotation values based on the last detected annotation
+    if last_annotation == 'N':
+        features["num_N_annotations"] = 1
+        features["num_AFIB_annotations"] = 0
+    elif last_annotation == 'AFIB':
+        features["num_N_annotations"] = 0
+        features["num_AFIB_annotations"] = 1
 
     if qrs_annotations is not None:
         features["num_qrs_annotations"] = len(qrs_annotations.sample)
@@ -335,7 +353,7 @@ def main():
         # Define the directory containing the ECG records
         ptb_dir = "../afdb"
 
-        records = ["04043"]  # add records here
+        records = ["04048"]  # add records here
 
         for record_name in records:
             record_path = os.path.join(ptb_dir, record_name)
