@@ -20,7 +20,7 @@ def preprocess_data(df):
         raise ValueError("No data left after filtering. Adjust the filter criteria.")
 
     # Normalize the data
-    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "num_N_annotations"]
+    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "heart_rate_std", "heart_rate_mean", "sd1", "sd2"]
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 

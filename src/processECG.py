@@ -266,25 +266,39 @@ def calculate_poincare(rr_intervals):
     return sd1, sd2
 
 
-def load_and_combine_data(data_dir):
+def load_and_combine_data(data_dir, output_file):
     # Initialize an empty list to hold DataFrames
     data_frames = []
 
     # Iterate over all files in the data directory
     for file_name in os.listdir(data_dir):
-        if file_name == "2023_dataframe.csv":  # ignore this file
-            continue
-        elif file_name == "afdb_data.csv":
-            continue
-        elif file_name.endswith('.csv'):
+        if file_name.endswith('.csv'):
             file_path = os.path.join(data_dir, file_name)
+            print(f"Reading file: {file_path}")
             # Read the CSV file into a DataFrame
             df = pd.read_csv(file_path)
+            print(f"File {file_name} contains {len(df)} records")
+            print(df.head())  # Print the first few records for verification
             data_frames.append(df)
 
     # Combine all DataFrames into one
-    combined_df = pd.concat(data_frames, ignore_index=True)
-    return combined_df
+    if data_frames:
+        combined_df = pd.concat(data_frames, ignore_index=True)
+        combined_df = add_has_afib_column(combined_df)
+
+        print(f"Combined DataFrame contains {len(combined_df)} records")
+        print(combined_df.head())  # Print the first few records of the combined DataFrame
+
+        # Save the combined DataFrame to a new CSV file
+        combined_df.to_csv(output_file, index=False)
+
+        # Re-read the saved file to verify the save operation
+        saved_df = pd.read_csv(output_file)
+        print(f"Re-read combined data saved to {output_file}")
+        print(f"Total records in re-read combined file: {len(saved_df)}")
+        print(saved_df.head())  # Print the first few records of the re-read combined DataFrame
+    else:
+        print("No CSV files found in the directory.")
 
 
 def add_has_afib_column(df):
@@ -378,11 +392,8 @@ def main():
         data_dir = "../data/10_sec_intervals"
         output_file = "../data/afdb_data.csv"
 
-        combined_df = load_and_combine_data(data_dir)
+        load_and_combine_data(data_dir, output_file)
 
-        combined_df = add_has_afib_column(combined_df)
-
-        save_combined_data(combined_df, output_file)
     else:
         return
 
