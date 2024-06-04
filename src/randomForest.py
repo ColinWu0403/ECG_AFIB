@@ -29,14 +29,17 @@ def prepare_data(df):
     # Filter out rows where cv > 0.5 (50 % variability)
     df = df[df['cv'] <= 0.5]
 
+    # Filter out rows where the signal_quality is lower than 0.3
+    df = df[df['signal_quality'] >= 0.3]
+
     # Normalize the data
-    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "num_N_annotations"]
+    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "heart_rate_std", "heart_rate_mean", "sd1", "sd2"]
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 
     # Prepare the data
-    X = df[features]  # Features: SDNN, RMSSD, and cv
-    y = df['has_AFIB']  # Target: whether the patient has AFib
+    X = df[features]
+    y = df['num_AFIB_annotations']  # Target: whether the patient has AFib
 
     # Address class imbalance using SMOTE
     smote = SMOTE(random_state=42)
