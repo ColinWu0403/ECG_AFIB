@@ -58,13 +58,13 @@ def plot_heart_rate_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            line_witdh = 3  # thicker line for AFib
+            line_width = 3  # thicker line for AFib
         else:
             color = 'green'  # Normal
-            line_witdh = 1
+            line_width = 1
 
         plt.plot([start_time, end_time], [heart_rate_mean[i], heart_rate_mean[i + 1]], color=color,
-                 linewidth=line_witdh)
+                 linewidth=line_width)
 
     plt.xlabel('Time (s)')
     plt.ylabel('Heart Rate Mean')
@@ -86,12 +86,12 @@ def plot_hrv_sdnn_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            linewidth = 3  # thicker line for AFib
+            line_width = 3  # thicker line for AFib
         else:
             color = 'green'  # Normal
-            linewidth = 1
+            line_width = 1
 
-        plt.plot([start_time, end_time], [hrv_sdnn[i], hrv_sdnn[i + 1]], color=color, linewidth=linewidth)
+        plt.plot([start_time, end_time], [hrv_sdnn[i], hrv_sdnn[i + 1]], color=color, linewidth=line_width)
 
     plt.xlabel('Time (s)')
     plt.ylabel('HRV SDNN')
@@ -113,12 +113,12 @@ def plot_cv_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            linewidth = 3  # thicker line for AFib
+            line_width = 3  # thicker line for AFib
         else:
             color = 'green'  # Normal
-            linewidth = 1
+            line_width = 1
 
-        plt.plot([start_time, end_time], [cv[i], cv[i + 1]], color=color, linewidth=linewidth)
+        plt.plot([start_time, end_time], [cv[i], cv[i + 1]], color=color, linewidth=line_width)
 
     plt.xlabel('Time (s)')
     plt.ylabel('CV')
@@ -140,12 +140,12 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            linewidth = 3  # thicker line for AFib
+            line_width = 3  # thicker line for AFib
         else:
             color = 'green'  # Normal
-            linewidth = 1
+            line_width = 1
 
-        plt.plot([start_time, end_time], [hrv_rmssd[i], hrv_rmssd[i + 1]], color=color, linewidth=linewidth)
+        plt.plot([start_time, end_time], [hrv_rmssd[i], hrv_rmssd[i + 1]], color=color, linewidth=line_width)
 
     plt.xlabel('Time (s)')
     plt.ylabel('RMSSD')
@@ -210,8 +210,7 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
 # Function to load the model conditionally
 def load_model_type(model_path, model_type):
     if model_type == "1":
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
+        model = load_model(model_path)
     elif model_type in ["2", "3", "6"]:
         model = tf.keras.models.load_model(model_path)
     elif model_type == "5":
@@ -224,7 +223,10 @@ def load_model_type(model_path, model_type):
 
 # Function to predict conditionally based on the model type
 def predict(model, model_type, features):
-    if model_type in ["1", "4"]:
+    if model_type == "1":
+        # Ensure features are in 2D format
+        # if len(features.shape) == 1:
+        #     features = features.reshape(1, -1)
         return model.predict(features)
     elif model_type in ["2", "3"]:
         features = np.array(features).reshape((features.shape[0], 1, features.shape[1]))  # LSTM and CNN
