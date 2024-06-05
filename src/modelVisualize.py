@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import joblib
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-import pickle
 import xgboost as xgb
 import numpy as np
 import tensorflow as tf
@@ -38,10 +37,8 @@ def load_data(file_path, specified_record):
     df = pd.read_csv(file_path)
     df['record_name'] = df['record_name'].astype(str)
     df = df[df['record_name'] == str(specified_record)]
-    return df
-
-
-record_name = "4043"
+    actual_afib_annotations = df['num_AFIB_annotations'].values  # Extract AFib annotations
+    return df, actual_afib_annotations
 
 
 # Plot heart rate mean with predictions
@@ -154,7 +151,7 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
 
 
 # Plot ECG signal with markers for Afib predictions
-def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time, end_time):
+def plot_ecg_with_predictions(ecg_signal, predictions, actual_afib, sampling_rate, start_time, end_time):
     plt.figure(figsize=(15, 6))
 
     # Calculate the indices corresponding to the start and end times
@@ -176,8 +173,9 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
 
     # Extract the relevant predictions for the interval
     relevant_predictions = predictions[start_prediction_index:end_prediction_index]
+    relevant_actual_afib = actual_afib[start_prediction_index:end_prediction_index]
 
-    for i, pred in enumerate(relevant_predictions):
+    for i, (pred, actual) in enumerate(zip(relevant_predictions, relevant_actual_afib)):
         interval_start = start_time + i * interval_length  # Interval start in seconds
         interval_end = start_time + (i + 1) * interval_length  # Interval end in seconds
 
@@ -188,7 +186,10 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
         interval_end_min = interval_end / 60  # Convert interval end to minutes
 
         if pred == 1:
-            plt.axvspan(interval_start_min, interval_end_min, color='red', alpha=0.75)  # Mark as red if Afib
+            if actual == 1:
+                plt.axvspan(interval_start_min, interval_end_min, color='red', alpha=1)  # Mark as red if actual and predict
+            else:
+                plt.axvspan(interval_start_min, interval_end_min, color='yellow', alpha=0.5)  # Mark as yellow only predict
         else:
             plt.axvspan(interval_start_min, interval_end_min, color='green', alpha=0.05)  # Mark as green if normal
 
@@ -196,7 +197,7 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
     start_time_hours = start_time / 3600
     end_time_hours = end_time / 3600
 
-    main_title = "ECG Signal with Afib Predictions"
+    main_title = f"ECG Signal with Afib Predictions: {record_name}"
     subtitle1 = f"Start Time: {start_time / 60:.2f} minutes ({start_time_hours:.2f} hours)"
     subtitle2 = f"End Time: {end_time / 60:.2f} minutes ({end_time_hours:.2f} hours)"
 
@@ -224,9 +225,6 @@ def load_model_type(model_path, model_type):
 # Function to predict conditionally based on the model type
 def predict(model, model_type, features):
     if model_type == "1":
-        # Ensure features are in 2D format
-        # if len(features.shape) == 1:
-        #     features = features.reshape(1, -1)
         return model.predict(features)
     elif model_type in ["2", "3"]:
         features = np.array(features).reshape((features.shape[0], 1, features.shape[1]))  # LSTM and CNN
@@ -241,6 +239,9 @@ def predict(model, model_type, features):
         return np.argmax(predictions, axis=1)
     else:
         raise ValueError("Unsupported model type.")
+
+
+record_name = "4048"
 
 
 # Main function to run the predictions and plot the results
@@ -304,7 +305,7 @@ def main():
             continue
 
         # Load the ECG data
-        df = load_data('../data/afdb_data.csv', record_name)
+        df, actual_afib_annotations = load_data('../data/afdb_data.csv', record_name)
 
         # Preprocess the data
         df, features, features_sample = preprocess_data(df)
@@ -333,7 +334,7 @@ def main():
                 end_time = (i + 1) * interval_length_seconds
 
                 # Plot ECG with Afib predictions for each 30-minute interval
-                plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time, end_time)
+                plot_ecg_with_predictions(ecg_signal, predictions, actual_afib_annotations, sampling_rate, start_time, end_time)
 
 
 if __name__ == "__main__":
