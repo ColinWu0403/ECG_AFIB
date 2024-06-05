@@ -1,9 +1,12 @@
 import wfdb
 import matplotlib.pyplot as plt
-import numpy as np
 import joblib
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import pickle
+import xgboost as xgb
+import numpy as np
+import tensorflow as tf
 
 
 # Load the model
@@ -60,7 +63,8 @@ def plot_heart_rate_with_predictions(df, predictions):
             color = 'green'  # Normal
             line_witdh = 1
 
-        plt.plot([start_time, end_time], [heart_rate_mean[i], heart_rate_mean[i + 1]], color=color, linewidth=line_witdh)
+        plt.plot([start_time, end_time], [heart_rate_mean[i], heart_rate_mean[i + 1]], color=color,
+                 linewidth=line_witdh)
 
     plt.xlabel('Time (s)')
     plt.ylabel('Heart Rate Mean')
@@ -159,7 +163,8 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
 
     # Extract the ECG signal and its corresponding time array for the specified interval
     ecg_interval = ecg_signal[start_index:end_index]
-    time_interval = np.arange(start_time, start_time + len(ecg_interval) / sampling_rate, 1 / sampling_rate) / 60  # Convert to minutes
+    time_interval = np.arange(start_time, start_time + len(ecg_interval) / sampling_rate,
+                              1 / sampling_rate) / 60  # Convert to minutes
 
     # Plot ECG signal
     plt.plot(time_interval, ecg_interval, color='black')
@@ -202,6 +207,40 @@ def plot_ecg_with_predictions(ecg_signal, predictions, sampling_rate, start_time
     plt.show()
 
 
+# Function to load the model conditionally
+def load_model_type(model_path, model_type):
+    if model_type == "1":
+        with open(model_path, 'rb') as file:
+            model = pickle.load(file)
+    elif model_type in ["2", "3", "6"]:
+        model = tf.keras.models.load_model(model_path)
+    elif model_type == "5":
+        model = xgb.Booster()
+        model.load_model(model_path)
+    else:
+        raise ValueError("Unsupported model type.")
+    return model
+
+
+# Function to predict conditionally based on the model type
+def predict(model, model_type, features):
+    if model_type in ["1", "4"]:
+        return model.predict(features)
+    elif model_type in ["2", "3"]:
+        features = np.array(features).reshape((features.shape[0], 1, features.shape[1]))  # LSTM and CNN
+        predictions = model.predict(features)
+        return np.argmax(predictions, axis=1)
+    elif model_type == "5":
+        d_matrix = xgb.DMatrix(features)
+        return model.predict(d_matrix)
+    elif model_type == "6":
+        features = np.array(features).reshape((features.shape[0], features.shape[1], 1))  # ResNet
+        predictions = model.predict(features)
+        return np.argmax(predictions, axis=1)
+    else:
+        raise ValueError("Unsupported model type.")
+
+
 # Main function to run the predictions and plot the results
 def main():
     print("Models:")
@@ -219,18 +258,21 @@ def main():
     elif model_type == "1":
         model_path = '../models/random_forest_model.pkl'
     elif model_type == "2":
-        model_path = '../models/LSTM_model.pkl'
+        model_path = '../models/LSTM_model.keras'
     elif model_type == "3":
-        model_path = '../models/CNN_model.pkl'
+        model_path = '../models/CNN_model.keras'
     elif model_type == "4":
         model_path = '../models/SVM_model.pkl'
     elif model_type == "5":
-        model_path = '../models/XGBoost_model.pkl'
+        model_path = '../models/XGBoost_model.model'
     elif model_type == "6":
-        model_path = '../models/resnet_model.pkl'
+        model_path = '../models/resnet_model.keras'
     else:
         print("Error: model does not exist.")
         return
+
+    # Load your trained model
+    model = load_model_type(model_path, model_type)
 
     while True:
         print("Choose the type of plot:")
@@ -259,9 +301,6 @@ def main():
             print("Invalid choice. Please choose again.")
             continue
 
-        # Load your trained model
-        model = load_model(model_path)
-
         # Load the ECG data
         df = load_data('../data/afdb_data.csv', record_name)
 
@@ -269,7 +308,7 @@ def main():
         df, features, features_sample = preprocess_data(df)
 
         # Predict AFib in each interval
-        predictions = model.predict(features)
+        predictions = predict(model, model_type, features)
 
         if choice != "5":
             # Plot based on the selected type

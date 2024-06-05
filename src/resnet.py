@@ -1,4 +1,3 @@
-import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -98,7 +97,7 @@ def build_resnet_model(input_shape, num_classes):
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Save the model
-    joblib.dump(model, '../models/resnet_model.pkl')
+    model.save('../models/resnet_model.keras')
 
     return model
 
