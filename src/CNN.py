@@ -82,7 +82,7 @@ def build_cnn_model(input_shape):
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Save the model
-    joblib.dump(model, '../models/CNN_model.pkl')
+    model.save('../models/CNN_model.keras')
     return model
 
 

@@ -1,4 +1,3 @@
-import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -65,7 +64,7 @@ def build_lstm_model(input_shape):
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Save the model
-    joblib.dump(model, '../models/LSTM_model.pkl')
+    model.save('../models/LSTM_model.keras')
 
     return model
 

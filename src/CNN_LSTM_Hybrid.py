@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -21,17 +22,26 @@ def load_data(file_path):
 
 
 def prepare_data(df):
+    # Filter out rows where SDNN > 500 ms
     df = df[df['hrv_sdnn'] <= 500]
-    df = df[df['hrv_rmssd'] <= 500]
-    df = df[df['cv'] <= 0.5]
-    df = df[df['signal_quality'] >= 0.5]
 
-    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "num_N_annotations"]
+    # Filter out rows where RMSSD > 500 ms
+    df = df[df['hrv_rmssd'] <= 500]
+
+    # Filter out rows where cv > 0.5 (50 % variability)
+    df = df[df['cv'] <= 0.5]
+
+    # Filter out rows where the signal_quality is lower than 0.3
+    df = df[df['signal_quality'] >= 0.3]
+
+    # Normalize the data
+    features = ['hrv_sdnn', 'hrv_rmssd', "hrv_mean", 'cv', "heart_rate_std", "heart_rate_mean", "sd1", "sd2"]
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
 
+    # Prepare the data
     x = df[features]
-    y = df['has_AFIB']
+    y = df['num_AFIB_annotations']  # Target: whether the patient has AFib
 
     smote = SMOTE(random_state=42)
     x_res, y_res = smote.fit_resample(x, y)
@@ -60,12 +70,16 @@ def build_cnn_lstm_model(input_shape, num_filters, kernel_size, lstm_units, drop
     model.add(Dropout(dropout_rate))
     model.add(Dense(2, activation='softmax'))
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Save the model
+    model.save('../models/CNN_LSTM_Hybrid_model.keras')
+
     return model
 
 
 def objective(trial):
     num_filters = trial.suggest_categorical('num_filters', [32, 64, 128])
-    kernel_size = trial.suggest_int('kernel_size', 2, 5)
+    kernel_size = trial.suggest_int('kernel_size', 1, 2)
     lstm_units = trial.suggest_int('lstm_units', 50, 150)
     dropout_rate = trial.suggest_float('dropout_rate', 0.2, 0.5)
 
