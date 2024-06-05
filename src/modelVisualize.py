@@ -224,15 +224,19 @@ def load_model_type(model_path, model_type):
 
 # Function to predict conditionally based on the model type
 def predict(model, model_type, features):
-    if model_type == "1":
+    if model_type in ["1", "4"]:
         return model.predict(features)
-    elif model_type in ["2", "3", "6"]:
-        features = np.array(features).reshape((features.shape[0], 1, features.shape[1]))
+    elif model_type in ["2", "3"]:
+        features = np.array(features).reshape((features.shape[0], 1, features.shape[1]))  # LSTM and CNN
         predictions = model.predict(features)
         return np.argmax(predictions, axis=1)
     elif model_type == "5":
         d_matrix = xgb.DMatrix(features)
         return model.predict(d_matrix)
+    elif model_type == "6":
+        features = np.array(features).reshape((features.shape[0], features.shape[1], 1))  # ResNet
+        predictions = model.predict(features)
+        return np.argmax(predictions, axis=1)
     else:
         raise ValueError("Unsupported model type.")
 
