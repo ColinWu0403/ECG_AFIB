@@ -12,4 +12,7 @@ venv
 *.qrsc
 *.xws
 *.pkl
+*.h5
+*.keras
+*.model
 .DS_Store
