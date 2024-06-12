@@ -15,4 +15,7 @@ venv
 *.h5
 *.keras
 *.model
+*.ipynb
 .DS_Store
+revlis_data
+papers
