@@ -42,6 +42,8 @@ def prepare_data(df):
     x = df[features]
     y = df['num_AFIB_annotations']  # Target: whether the patient has AFib
 
+    # print("Preprocessing")
+    # print(str(len(df)))
     smote = SMOTE(random_state=42)
     x_res, y_res = smote.fit_resample(x, y)
 
@@ -87,10 +89,14 @@ def build_cnn_model(input_shape):
 
 
 def evaluate_model(model, x_test, y_test):
+    # print(len(x_test))
+    # print(len(y_test))
     y_pred_proba = model.predict(x_test)
     y_pred = np.argmax(y_pred_proba, axis=1)
     y_true = np.argmax(y_test, axis=1)
 
+    # print(len(y_pred))
+    # print(len(y_true))
     accuracy = accuracy_score(y_true, y_pred)
     conf_matrix = confusion_matrix(y_true, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
@@ -158,6 +164,11 @@ filename = '../data/afdb_data.csv'
 def main():
     df = load_data(filename)
     x_train, x_test, y_train, y_test = prepare_data(df)
+
+    # print("x_train: " + str(len(x_train)))
+    # print("x_test: " + str(len(x_test)))
+    # print("y_train: " + str(len(y_train)))
+    # print("y_test: " + str(len(y_test)))
 
     input_shape = (x_train.shape[1], x_train.shape[2])
     model = build_cnn_model(input_shape)
