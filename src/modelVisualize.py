@@ -152,6 +152,10 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
 
 # Plot ECG signal with markers for Afib predictions
 def plot_ecg_with_predictions(ecg_signal, predictions, actual_afib, sampling_rate, start_time, end_time):
+    print("Predictions: " + str(np.count_nonzero(predictions)))
+    print(predictions)
+    print("Actual AFIB: " + str(np.count_nonzero(actual_afib)))
+    print(actual_afib)
     plt.figure(figsize=(15, 6))
 
     # Calculate the indices corresponding to the start and end times
@@ -191,7 +195,10 @@ def plot_ecg_with_predictions(ecg_signal, predictions, actual_afib, sampling_rat
             else:
                 plt.axvspan(interval_start_min, interval_end_min, color='yellow', alpha=0.5)  # Mark as yellow only predict
         else:
-            plt.axvspan(interval_start_min, interval_end_min, color='green', alpha=0.05)  # Mark as green if normal
+            if actual == 1:
+                plt.axvspan(interval_start_min, interval_end_min, color='blue', alpha=0.75)  # Mark as blue if actual
+            else:
+                plt.axvspan(interval_start_min, interval_end_min, color='green', alpha=0.05)  # Mark as green if normal
 
     # Convert start and end times to hours
     start_time_hours = start_time / 3600
@@ -241,7 +248,7 @@ def predict(model, model_type, features):
         raise ValueError("Unsupported model type.")
 
 
-record_name = "4048"
+record_name = "4043"
 
 
 # Main function to run the predictions and plot the results
