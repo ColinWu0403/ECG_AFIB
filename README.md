@@ -21,22 +21,22 @@ install --no-cache-dir -r requirements.txt
 ## Models
 
 ### Random Forest Classifier
-Used sci-kit learn's RandomForestClassifier to classify an ECG signal in a small-time interval as Normal or AFIB.
+Used RandomForestClassifier from `sci-kit learn` to classify an ECG signal in a small-time interval as Normal or AFIB.
 
 ### LSTM
-Used TensorFlow to create a 3-layer LSTM (RNN) model to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used `TensorFlow` to create a 3-layer LSTM (RNN) model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ### CNN
-Used TensorFlow to create a 3 layer CNN model to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used `TensorFlow` to create a 3 layer CNN model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ### SVM
-Used sci-kit learn's SVC model to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used SVC from `sci-kit learn` to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ### Gradient Boost
-Used xgboost to create a Gradient Boosting model to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used `xgboost` to create a Gradient Boosting model to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ### Resnet
-Used TensorFlow to create a model with 1 Convolutional layer and 2 Residual blocks to classify ECG signals in a 30-second time interval as Normal or AFIB.
+Used `TensorFlow` to create a Resnet model with 1 Convolutional layer and 2 Residual blocks to classify ECG signals in a 30-second time interval as Normal or AFIB.
 
 ## Citations
 - Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220. https://doi.org/10.13026/C2MW2D
