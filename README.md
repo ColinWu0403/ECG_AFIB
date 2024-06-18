@@ -3,15 +3,15 @@
 [![Static Badge](https://img.shields.io/badge/Python-3.11.7-306998)](https://www.python.org/downloads/release/python-3117/)
 
 ## About
-This project is a classification model in Python that predicts if a patient has Atrial Fibrillation (Afib) based on the given Electrocardiography (ECG) signals of the patient.
+This project contains a collection of classification models in Python that predict if a patient has Atrial Fibrillation (Afib) based on the given Electrocardiography (ECG) signals of the patient.
 
-The model is written in Python using scikit-learn and TensorFlow Keras for classification and uses wfdb and Neurokit2 to analyze ECG signals and measure data to export them to a dataset (in the data/ folder as .csv files).
+The model is written in Python using `scikit-learn` and `TensorFlow Keras` for classification and uses `wfdb` and `Neurokit2` to analyze ECG signals and measure data to export them to a dataset (in the _data/_ folder as .csv files).
 
-The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (afdb) and the PTB-XL ECG Database (ptb).
+The ECG signals are taken from the MIT-BIH Atrial Fibrillation Database (in _afdb/_) and the PTB-XL ECG Database (in _ptb/_).
 
-The afdb/ and ptb/ folders contain the respective database signals, but the actual files are not pushed as they are too large. You can download them on the official website (the link is in the citation below).
+The _afdb/_ and _ptb/_ folders contain the respective database signals, but the actual files are not pushed as they are too large. You can download them on the official website (the link is in the citation below).
 
-The models/ folder contains the generated .pkl files for the models.
+The _models/_ folder contains the generated files for the models.
 
 ## Install required libraries
 ```
