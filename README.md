@@ -1,4 +1,4 @@
-# ECG Signal Analysis and Atrial Fibrillation (Afib) Detection Model
+# ECG Signal Analysis and Atrial Fibrillation (Afib) Detection Models
 
 [![Static Badge](https://img.shields.io/badge/Python-3.11.7-306998)](https://www.python.org/downloads/release/python-3117/)
 
@@ -6,15 +6,15 @@
 
 This project contains a collection of classification models in Python that predict if a patient has Atrial Fibrillation (Afib) based on the given Electrocardiography (ECG) signals of the patient.
 
-The model is written in Python using `scikit-learn` and `TensorFlow Keras` for classification and uses `wfdb` and `Neurokit2` to analyze ECG signals and measure data to export them to a dataset (in the _data/_ folder as .csv files).
+The models are written in Python using `scikit-learn` and `TensorFlow Keras` for classification and use `wfdb` and `Neurokit2` to analyze ECG signals and measure data to export them to a dataset (in the _data/_ folder as .csv files).
 
 The ECG signals are taken from the open-source MIT-BIH Atrial Fibrillation Database (in _afdb/_) and the PTB-XL ECG Database (in _ptb/_).
 
 The _afdb/_ and _ptb/_ folders contain the respective database signals, but the actual files are not pushed as they are too large. You can download them on the official website (the link is in the citation below).
 
-The _models/_ folder contains the generated files for the models.
+The _models/_ folder contains the generated files for the models, also not pushed to GitHub.
 
-The _reports/_ folder contains the auto-generated report for each model, including the accuraccy and confusion matrix.
+The _reports/_ folder contains the auto-generated report for each model, including the accuracy and confusion matrix.
 
 ## Install required libraries
 
@@ -34,7 +34,7 @@ Used `TensorFlow` to create a 3-layer LSTM (RNN) model to classify ECG signals o
 
 ### CNN
 
-Used `TensorFlow` to create a 3 layer CNN model to classify ECG signals on 5-second time intervals as Normal or AFIB.
+Used `TensorFlow` to create a 3-layer CNN model to classify ECG signals on 5-second time intervals as Normal or AFIB.
 
 ### SVM
 
