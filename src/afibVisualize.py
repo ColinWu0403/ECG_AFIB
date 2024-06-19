@@ -47,9 +47,9 @@ plt.grid(True)
 
 
 plt.tight_layout()
-plt.savefig('ecg_signal.png')
+plt.savefig('../reports/ecg_signal.png')
 plt.close()
 
 # Display the saved image
-img = Image.open('ecg_signal.png')
+img = Image.open('../reports/ecg_signal.png')
 img.show()
