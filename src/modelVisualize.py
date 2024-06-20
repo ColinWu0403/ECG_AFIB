@@ -55,7 +55,7 @@ def plot_heart_rate_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            line_width = 3  # thicker line for AFib
+            line_width = 1.5  # thicker line for AFib
         else:
             color = 'green'  # Normal
             line_width = 1
@@ -83,7 +83,7 @@ def plot_hrv_sdnn_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            line_width = 3  # thicker line for AFib
+            line_width = 1.5  # thicker line for AFib
         else:
             color = 'green'  # Normal
             line_width = 1
@@ -110,7 +110,7 @@ def plot_cv_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            line_width = 3  # thicker line for AFib
+            line_width = 1.5  # thicker line for AFib
         else:
             color = 'green'  # Normal
             line_width = 1
@@ -137,7 +137,7 @@ def plot_hrv_rmssd_with_predictions(df, predictions):
 
         if pred == 1:
             color = 'red'  # AFib
-            line_width = 3  # thicker line for AFib
+            line_width = 1.5  # thicker line for AFib
         else:
             color = 'green'  # Normal
             line_width = 1
