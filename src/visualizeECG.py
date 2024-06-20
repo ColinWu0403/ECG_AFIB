@@ -170,7 +170,7 @@ def get_file_name(path):
 
 
 def main():
-    csv_file = '../data/30_sec_intervals/04048_features.csv'  # Replace with the path to your CSV file
+    csv_file = '../data/10_sec_intervals/04043_features.csv'  # Replace with the path to your CSV file
 
     print("Select the type of plot:")
     print("1. Heart Rate Mean")
