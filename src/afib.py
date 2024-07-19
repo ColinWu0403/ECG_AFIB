@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import joblib
 import neurokit2 as nk
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -26,8 +27,8 @@ for _, row in profiles.iterrows():
     if not os.path.exists(file_path):
         # print(f"File {file_path} does not exist. Skipping.")
         continue
-    else:
-        print(f"File {filename} exists: ")
+    # else:
+        # print(f"File {filename} exists: ")
 
     # Read the ECG file
     ecg_df = pd.read_csv(file_path)
@@ -56,7 +57,7 @@ for _, row in profiles.iterrows():
     # Append the features and the label to the lists
     ecg_data.append([mean_val, std_val, max_val, min_val, sdnn, rmssd, meanNN])
     af_labels.append(1 if af_similarity > 1 else 0)  # Assuming a threshold for AFib detection
-    print([mean_val, std_val, max_val, min_val, sdnn, rmssd, meanNN])
+    # print([mean_val, std_val, max_val, min_val, sdnn, rmssd, meanNN])
 
 # Convert the lists to NumPy arrays
 x = np.array(ecg_data)
@@ -68,6 +69,11 @@ x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 # Train a Random Forest classifier
 clf = RandomForestClassifier(n_estimators=100, random_state=42)
 clf.fit(x_train, y_train)
+
+
+# Save the trained model
+model_save_path = '../papers/random_forest_model.pkl'
+joblib.dump(clf, model_save_path)
 
 # Predict on the test set
 y_pred = clf.predict(X_test)

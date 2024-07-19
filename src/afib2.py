@@ -1,10 +1,14 @@
 import pandas as pd
 import numpy as np
 import os
+import joblib
 import neurokit2 as nk
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+
+model_save_path = '../papers/random_forest_model.pkl'
+clf = joblib.load(model_save_path)
 
 # Define directories
 normal_dir = '../data/revlis_data/AF_TEST/csv/Normal_csv'
@@ -50,20 +54,13 @@ for filename in os.listdir(af_dir):
         af_labels.append(1)  # Label 1 for AF
 
 # Convert the lists to NumPy arrays
-x = np.array(ecg_data)
-y = np.array(af_labels)
-
-# Split the data into training and testing sets
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-# Train a Random Forest classifier
-clf = RandomForestClassifier(n_estimators=100, random_state=42)
-clf.fit(x_train, y_train)
+x_test = np.array(ecg_data)
+y_test = np.array(af_labels)
 
 # Predict on the test set
 y_pred = clf.predict(x_test)
 
 # Evaluate the model
-print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Accuracy on new test data:", accuracy_score(y_test, y_pred))
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
