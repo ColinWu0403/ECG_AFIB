@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 # Replace 'your_file.csv' with the path to your CSV file
-record_name = "20240201112855_034635"
+record_name = "20240213074518_026674"
 csv_file = f'../data/revlis_data/csv/{record_name}.csv'
 
 # Read the CSV file
@@ -22,6 +22,8 @@ lead2_signal = lead2_signal.to_numpy()
 # Calculate time in seconds
 sampling_rate = 1000  # Sampling rate in Hz
 time = np.arange(len(lead2_signal)) / sampling_rate
+
+time = time / 3 # 10 seconds
 
 # Remove baseline wandering using neurokit2
 cleaned_signal = nk.ecg_clean(lead2_signal, sampling_rate=sampling_rate)
