@@ -357,7 +357,7 @@ def main():
 
     if choice == "1":
         # Define the directory containing the ECG records
-        ptb_dir = "../afdb"
+        ptb_dir = "../data/afdb"
 
         records = ["04048"]  # add records here
 
@@ -372,8 +372,8 @@ def main():
             # Save the DataFrame to a CSV file
             df.to_csv(file_name, index=False)
     elif choice == "2":
-        ptb_dir = "../ptb"
-        csv_file = "../ptb/ptbxl_afib.csv"
+        ptb_dir = "../data/ptb"
+        csv_file = "../data/ptb/ptbxl_afib.csv"
         output_file = "../data/10_sec_intervals/hr_features.csv"
 
         if not os.path.exists("../data/10_sec_intervals"):
