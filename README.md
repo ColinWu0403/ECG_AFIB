@@ -6,7 +6,7 @@
 
 This project contains a collection of classification models in Python that predict if a patient has Atrial Fibrillation (Afib) based on the given Electrocardiography (ECG) signals of the patient.
 
-The models are written in Python using `scikit-learn` and `TensorFlow Keras` for classification and use `wfdb` and `Neurokit2` to analyze ECG signals and measure data to export them to a dataset (in the _data/_ folder as .csv files).
+The models are written in Python using `scikit-learn` and `TensorFlow Keras`. `wfdb` and `Neurokit2` are used to analyze ECG signals and measure data to export them to a dataset (in the _data/_ folder as .csv files).
 
 The ECG signals are taken from the open-source MIT-BIH Atrial Fibrillation Database (in _afdb/_) and the PTB-XL ECG Database (in _ptb/_).
 
@@ -48,7 +48,7 @@ Used `xgboost` to create a Gradient Boosting model to classify ECG signals on 10
 
 Used `TensorFlow` to create a Resnet model with 1 Convolutional layer and 2 Residual blocks to classify ECG signals on 10-second intervals as Normal or AFIB.
 
-## Citations
+## References
 
 - Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220. https://doi.org/10.13026/C2MW2D
 - Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lespinasse, F., Pham, H., Schölzel, C., & Chen, S. A. (2021). NeuroKit2: A Python toolbox for neurophysiological signal processing. Behavior Research Methods, 53(4), 1689–1696. https://doi.org/10.3758/s13428-020-01516-y
