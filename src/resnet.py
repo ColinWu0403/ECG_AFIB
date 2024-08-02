@@ -168,9 +168,6 @@ def delete_images():
     os.remove("confusion_matrix.png")
 
 
-filename = '../data/afdb_data.csv'
-
-
 def main():
     df = load_data(filename)
     x_train, x_test, y_train, y_test = prepare_data(df)
@@ -186,4 +183,6 @@ def main():
 
 
 if __name__ == "__main__":
+    filename = '../data/afdb_data.csv'
+
     main()

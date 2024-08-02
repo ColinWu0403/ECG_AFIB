@@ -3,20 +3,7 @@ import numpy as np
 import os
 import joblib
 import neurokit2 as nk
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
-
-model_save_path = '../papers/random_forest_model.pkl'
-clf = joblib.load(model_save_path)
-
-# Define directories
-normal_dir = '../data/revlis_data/AF_TEST/csv/Normal_csv'
-af_dir = '../data/revlis_data/AF_TEST/csv/AF_Arr_csv'
-
-# Initialize lists to hold the features and labels
-ecg_data = []
-af_labels = []
 
 # Function to extract features from ECG file
 def extract_features(file_path):
@@ -37,30 +24,67 @@ def extract_features(file_path):
 
     return [mean_val, std_val, max_val, min_val, sdnn, rmssd, meanNN]
 
-# Process Normal files
-for filename in os.listdir(normal_dir):
-    file_path = os.path.join(normal_dir, filename)
-    if os.path.isfile(file_path):
-        features = extract_features(file_path)
-        ecg_data.append(features)
-        af_labels.append(0)  # Label 0 for Normal
+def process_data(normal_dir, af_dir):
+    # Process Normal files
+    for filename in os.listdir(normal_dir):
+        file_path = os.path.join(normal_dir, filename)
+        if os.path.isfile(file_path):
+            features = extract_features(file_path)
+            ecg_data.append(features)
+            af_labels.append(0)  # Label 0 for Normal
+            file_names.append(filename)
 
-# Process AF files
-for filename in os.listdir(af_dir):
-    file_path = os.path.join(af_dir, filename)
-    if os.path.isfile(file_path):
-        features = extract_features(file_path)
-        ecg_data.append(features)
-        af_labels.append(1)  # Label 1 for AF
+    # Process AF files
+    for filename in os.listdir(af_dir):
+        file_path = os.path.join(af_dir, filename)
+        if os.path.isfile(file_path):
+            features = extract_features(file_path)
+            ecg_data.append(features)
+            af_labels.append(1)  # Label 1 for AF
+            file_names.append(filename)
 
-# Convert the lists to NumPy arrays
-x_test = np.array(ecg_data)
-y_test = np.array(af_labels)
+def evaluate_model():
+    # Convert the lists to NumPy arrays
+    x_test = np.array(ecg_data)
+    y_test = np.array(af_labels)
 
-# Predict on the test set
-y_pred = clf.predict(x_test)
+    # Predict on the test set
+    y_pred = clf.predict(x_test)
 
-# Evaluate the model
-print("Accuracy on new test data:", accuracy_score(y_test, y_pred))
-print("Classification Report:")
-print(classification_report(y_test, y_pred))
+    # Evaluate the model
+    print("Accuracy on new test data:", accuracy_score(y_test, y_pred))
+    print("Classification Report:")
+    print(classification_report(y_test, y_pred))
+    
+    return y_pred, y_test
+
+def main():
+    process_data(normal_dir, af_dir)
+    y_pred, y_test = evaluate_model()
+    
+    # Prepare a DataFrame with predictions vs actual labels
+    results_df = pd.DataFrame({
+        'File Name': file_names,
+        'Predicted Label': y_pred,
+        'Actual Label': y_test
+    })
+
+    results_df['Correct'] = results_df['Predicted Label'] == results_df['Actual Label']
+
+    results_df.to_csv('../data/revlis_data/af_prediction_results.csv', index=False)
+
+if __name__ == "__main__":
+    # Define directories
+    normal_dir = '../data/revlis_data/AF_TEST/csv/Normal_csv'
+    af_dir = '../data/revlis_data/AF_TEST/csv/AF_Arr_csv'
+
+    model_save_path = '../papers/random_forest_model.pkl'
+    clf = joblib.load(model_save_path)
+
+    # Initialize lists to hold the features and labels
+    ecg_data = []
+    af_labels = []
+    file_names = []
+    predictions = []
+    
+    main()

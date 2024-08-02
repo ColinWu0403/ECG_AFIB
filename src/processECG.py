@@ -4,14 +4,6 @@ import pandas as pd
 import numpy as np
 import os
 
-
-# Global variables to keep track of the last annotation state
-total_N_annotations = 0
-total_AFIB_annotations = 0
-last_annotation = None
-last_annotation_type = None
-
-
 def process_ecg_interval(record_path, record_name, start_sample, end_sample, interval_index):
     global total_N_annotations
     global total_AFIB_annotations
@@ -399,4 +391,10 @@ def main():
 
 
 if __name__ == "__main__":
+  # Global variables to keep track of the last annotation state
+    total_N_annotations = 0
+    total_AFIB_annotations = 0
+    last_annotation = None
+    last_annotation_type = None
+    
     main()

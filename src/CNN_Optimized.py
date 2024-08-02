@@ -170,9 +170,6 @@ def objective(trial):
     return accuracy
 
 
-filename = '../data/afdb_data.csv'
-
-
 def main():
     study = optuna.create_study(direction='maximize')
     study.optimize(objective, n_trials=50)
@@ -198,4 +195,6 @@ def main():
 
 
 if __name__ == "__main__":
+    filename = '../data/afdb_data.csv'
+
     main()
