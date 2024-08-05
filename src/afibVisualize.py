@@ -5,8 +5,11 @@ import numpy as np
 from PIL import Image
 
 # Replace 'your_file.csv' with the path to your CSV file
-record_name = "20240213074518_026674"
-csv_file = f'../data/revlis_data/csv/{record_name}.csv'
+# record_name = "20240213074518_026674"
+# csv_file = f'../data/revlis_data/csv/{record_name}.csv'
+
+record_name = "20240204101702_019818"
+csv_file = f'../data/revlis_data/AF_TEST/csv/AF_Arr_csv/{record_name}.csv'
 
 # Read the CSV file
 data = pd.read_csv(csv_file)
